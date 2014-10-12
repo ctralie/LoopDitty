@@ -1,0 +1,62 @@
+<html>
+
+<head>
+<!--External Libraries!-->
+<script src="http://connect.soundcloud.com/sdk.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="libs/json2.js"></script>
+<script type="text/javascript" src="libs/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="libs/webgl-utils.js"></script>
+<script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
+<script type="text/javascript" src="libs/SCapi.js"></script>
+
+<!--My Scripts!-->
+<script src="EchoNestInteractor.js"></script>
+<script src="LoopDittyGL.js"></script>
+</head>
+
+<!--<body onload="webGLStart();">!-->
+<body>
+
+<!--<script>
+SC.initialize({
+  client_id: 'b302c6dd719d6e25ac23e4c34335272c'
+});
+
+// stream track id 293
+SC.stream("/tracks/6142099", function(sound){
+  sound.play();
+});
+
+</script>!-->
+
+
+<input id = "urlin" type = "text">
+
+<button type = "button" onclick = "loadSongUrl()">Submit</button>
+
+<BR>
+TRACK ID:<BR>
+<p id = "trackid">
+
+</p>
+
+<BR>
+ORIGINAL:<BR>
+<p id = "original">
+
+</p>
+
+<BR>
+INFO:<BR>
+<p id = "info">
+
+</p>
+
+
+<canvas id="LoopDittyGLCanvas" style="border: none;" width="500" height="500"></canvas>
+
+
+
+</body>
+</html>
