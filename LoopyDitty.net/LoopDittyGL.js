@@ -1,4 +1,5 @@
 var gl;
+var glcanvas;
 
 function initGL(canvas) {
     try {
@@ -167,11 +168,47 @@ function initGLBuffers(X) {
     requestAnimFrame(repaint);
 }
 
+
+var lastX;
+var lastY;
+var dragging = false;
+
+//Functions to handle mouse motion
+function getMousePos(evt) {
+	var rect = glcanvas.getBoundingClientRect();
+	return {
+		X: evt.clientX - rect.left,
+		Y: evt.clientY - rect.top
+	};
+}
+
+function mouseUp(evt) {
+	dragging = false;
+}
+
+function mouseDown(evt) {
+	dragging = true;
+}
+
+function mouseMoved(evt) {
+	var mousePos = getMousePos(evt);
+	var dx = mousePos.X - lastX;
+	var dy = mousePos.Y - lastY;
+	lastX = mousePos.X;
+	lastY = mousePos.Y;
+	if (dragging) {
+		self.theta = self.theta + 0.01*dx;
+		self.phi = self.phi + 0.01*dy;
+		requestAnimFrame(repaint);
+	}
+}
+
+
 //Variables for polar camera
-var theta = 0.0;
+var theta = 0;
 var phi = 0.0;
 var camCenter = [0.0, 0.0, 0.0];
-var camR = 2.0;
+var camR = 5.0;
 
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -179,14 +216,28 @@ function drawScene() {
 
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
-    mat4.identity(mvMatrix);
+    //mat4.identity(mvMatrix);
     var sinT = numeric.sin([theta])[0];
     var cosT = numeric.cos([theta])[0];
     var sinP = numeric.sin([phi])[0];
     var cosP = numeric.cos([phi])[0];
-    var T = [-sinP*cosP, -cosP, sinP*sinT];
+    var T = [-sinP*cosT, -cosP, sinP*sinT];
     var U = [-cosP*cosT, sinP, cosP*sinT];
+    var R = [-sinT, 0, -cosT];
     var eye = [camCenter[0] - camR*T[0], camCenter[1] - camR*T[1], camCenter[2] - camR*T[2]];
+	rotMat = [[R[0], U[0], -T[0], 0], [R[1], U[1], -T[1], 0], [R[2], U[2], -T[2], 0], [0, 0, 0, 1]];
+	rotMat = numeric.transpose(rotMat);
+	transMat = [[1, 0, 0, -eye[0]], [0, 1, 0, -eye[1]], [0, 0, 1, -eye[2]], [0, 0, 0, 1]];
+	var mvMatrix4x4 = numeric.dot(rotMat, transMat);
+	mvMatrix = [];
+	var i = 0;
+	var j = 0;
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			mvMatrix.push(mvMatrix4x4[j][i]);
+		}
+	}
+	
 
 	if (pointsVBO != -1 && colorsVBO != -1) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, pointsVBO);
@@ -205,10 +256,13 @@ function repaint() {
 }
 
 function webGLStart() {
-    var canvas = document.getElementById("LoopDittyGLCanvas");
-    initGL(canvas);
+    glcanvas = document.getElementById("LoopDittyGLCanvas");
+    glcanvas.addEventListener('mousemove', mouseMoved);
+    glcanvas.addEventListener('mousedown', mouseDown);
+    glcanvas.addEventListener('mouseup', mouseUp);
+    initGL(glcanvas);
     initShaders();
-    initGLBuffers([[0, 0, -4, 0], [0, 1, -4, 2], [1, 1, -4, 3], [1, 0, -5, 4]]);
+    initGLBuffers([[0, 0, 0, 0], [0, 1, 0, 2], [1, 1, 0, 3], [1, 0, -1, 4]]);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
