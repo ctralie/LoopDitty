@@ -11,12 +11,11 @@
 <script type="text/javascript" src="libs/SCapi.js"></script>
 
 <!--My Scripts!-->
-<script src="EchoNestInteractor.js"></script>
 <script src="LoopDittyGL.js"></script>
+<script src="EchoNestInteractor.js"></script>
 </head>
 
-<!--<body onload="webGLStart();">!-->
-<body>
+<body onload="webGLStart();">
 
 <!--<script>
 SC.initialize({
@@ -35,9 +34,12 @@ SC.stream("/tracks/6142099", function(sound){
 
 <button type = "button" onclick = "loadSongUrl()">Submit</button>
 
-<BR>
-TRACK ID:<BR>
-<p id = "trackid">
+<BR>TRACK ID:<BR>
+
+<p id = "trackid"><BR>
+<canvas id="LoopDittyGLCanvas" style="border: none;" width="640" height="480"></canvas><BR><BR>
+
+
 
 </p>
 
@@ -54,7 +56,7 @@ INFO:<BR>
 </p>
 
 
-<canvas id="LoopDittyGLCanvas" style="border: none;" width="500" height="500"></canvas>
+
 
 
 

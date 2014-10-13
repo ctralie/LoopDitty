@@ -168,7 +168,8 @@ function getSegmentsOnly(track) {
 <!--Copied and modified from echo nest remix!-->
 function getSegmentsText(track) {
 	var X = getSegmentsPCA(track);
-	var infoid = document.getElementById("info");
+	initGLBuffers(X);//Initialize the GL buffers
+	/*var infoid = document.getElementById("info");
 	var text = "";
 	var i = 0;
 	var j = 0;
@@ -178,7 +179,7 @@ function getSegmentsText(track) {
 		}
 		text += "<BR>\n";
 	}
-	infoid.innerHTML = text;
+	infoid.innerHTML = text;*/
 	
 	/*X = getSegmentsOnly(track);
 	var originalid = document.getElementById("original");

@@ -1,9 +1,10 @@
 attribute vec3 vPos;
+attribute vec4 vColor;
 
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 
-varying vec3 vColor;
+varying vec4 fColor;
 
 
 void main(void) {
