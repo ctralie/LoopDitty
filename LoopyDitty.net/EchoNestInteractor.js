@@ -236,20 +236,11 @@ var getEchoNestSongInfo = function(results) {
 };
 
 var getTRID = function(results) {
-	var trackid = document.getElementById("trackid");
-	trackid.innerHTML = results.trid;
+	//var trackid = document.getElementById("trackid");
+	//trackid.innerHTML = results.trid;
 	retryCount = 5;
 	retryInterval = 2000;
 	lookForAnalysis(results.trid);
-	
-	/*jQuery.getJSON('http://developer.echonest.com/api/v4/track/profile',
-		{
-			id: results.trid,
-			api_key: ECHONESTKEY,
-			bucket: "audio_summary",
-		}, 
-		getEchoNestSongInfo
-	);*/
 		
 };
 
