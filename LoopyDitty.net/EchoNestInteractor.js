@@ -167,7 +167,9 @@ function getSegmentsOnly(track) {
 
 <!--Copied and modified from echo nest remix!-->
 function getSegmentsText(track) {
+	var pagestatus = document.getElementById("pagestatus");
 	var X = getSegmentsPCA(track);
+	pagestatus.innerHTML = "Allocating GL buffers...";
 	initGLBuffers(X);//Initialize the GL buffers
 	/*var infoid = document.getElementById("info");
 	var text = "";
@@ -193,6 +195,26 @@ function getSegmentsText(track) {
 	originalid.innerHTML = text;*/
 }
 
+var getEchoNestSongInfo = function(track) {
+	var pagestatus = document.getElementById("pagestatus");
+	var title = "Unknown";
+	var artist = "Unknown";
+	str = "<table><tr><td>";
+	if (track.hasOwnProperty('release_image')) {
+		str += "<img src = " + track.release_image + ">";
+	}
+	if (track.hasOwnProperty('title')) {
+		title = track.title;
+	}
+	if (track.hasOwnProperty('artist')) {
+		artist = track.artist;
+	}
+	str += "</td><td><table><tr><td><h3>Title</h3></td><td><h3>" + title + "</h3></td></tr>";
+	str += "<tr><td><h3>Artist</h3></td><td><h3>" + artist + "</h3></td></tr>";
+	str += "</table></td></tr></table>";
+	pagestatus.innerHTML = str;
+};
+
 function lookForAnalysis(trackID) {
     var url = 'http://developer.echonest.com/api/v4/track/profile?format=json&bucket=audio_summary';
     var track;
@@ -206,21 +228,31 @@ function lookForAnalysis(trackID) {
 		$.getJSON("http://query.yahooapis.com/v1/public/yql", 
 			{ q: "select * from json where url=\"" + analysisURL + "\"", format: "json"}, 
 			function(data) {
+				var pagestatus = document.getElementById("pagestatus");
 				if (data.query.results != null) {
 					track.analysis = data.query.results.json;
 					console.log("Got analysis");
+					pagestatus.innerHTML = "Analysis data retrieved, computing projection...";
 					getSegmentsText(track);
+					getEchoNestSongInfo(track);
 				}
 				else {
 					retryCount = retryCount - 1;
 					retryInterval = retryInterval + 1000;
 					if (retryCount > 0) {
 						console.log('Analysis pending, trying again')
+						var strout = "EchoNest analysis data pending.";
+						var i;
+						for (i = 0; i < retryCount; i++) {
+							strout += ".";
+						}
+						pagestatus.innerHTML = strout;
 						setTimeout(function () {
 							lookForAnalysis(trackID);
 						}, retryInterval);
 					} else {
 						console.log('error', 'No analysis data returned:  try again, or try another trackID');   
+						pagestatus.innerHTML = "Error: Could not retrieve analysis data from EchoNest.  Try again, or try another song";
 					}
 				}
 		}); // end yahoo proxy getJson
@@ -228,20 +260,13 @@ function lookForAnalysis(trackID) {
 } // end lookForAnalysis
 <!--End copy and modify from echo nest remix!-->
 
-
-var getEchoNestSongInfo = function(results) {
-	var info = document.getElementById("info");
-	var track = results.response.track;
-	info.innerHTML = track.artist + "<BR><a href = \"" + track.preview_url + "\">preview</a><BR>" + "<img src = " + track.release_image + "><BR>" + track.song_id;
-};
-
 var getTRID = function(results) {
-	//var trackid = document.getElementById("trackid");
-	//trackid.innerHTML = results.trid;
+	initGLBuffers(LOADING_CURVE);
+	var pagestatus = document.getElementById("pagestatus");
+	pagestatus.innerHTML = "Please wait, loading...";
 	retryCount = 5;
 	retryInterval = 2000;
 	lookForAnalysis(results.trid);
-		
 };
 
 function loadSongUrl() {
@@ -252,5 +277,10 @@ function loadSongUrl() {
             id:url,
         },
 		getTRID
-    );
+    ).error(function(){ 
+    	var pagestatus = document.getElementById("pagestatus");
+    	pagestatus.innerHTML = "<font color = 'red'><h3>ERROR Grabbing SoundCloud ID: Service Temporarily Down</h3></font>";
+    	var results;
+    	lookForAnalysis("TRYTXUG141F2431416");
+    });
 }

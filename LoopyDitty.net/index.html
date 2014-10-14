@@ -30,19 +30,19 @@ SC.stream("/tracks/6142099", function(sound){
 </script>!-->
 
 
-<input id = "urlin" type = "text">
+<b>Past SoundCloud URL Below</b>
+<table><tr>
+<td><input id = "urlin" type = "text"></td>
+<td><button type = "button" onclick = "loadSongUrl()">Submit</button></td>
+</tr>
+</table>
 
-<button type = "button" onclick = "loadSongUrl()">Submit</button>
-
-<BR>TRACK ID:<BR>
-
-<p id = "trackid"><BR>
-<canvas id="LoopDittyGLCanvas" style="border: none;" width="640" height="480"></canvas><BR><BR>
+<h2><p id = "pagestatus"></p></h2><BR>
+<canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
 
 
-
-</p>
-
+<!--For Debugging!-->
+<!--
 <BR>
 ORIGINAL:<BR>
 <p id = "original">
@@ -54,7 +54,7 @@ INFO:<BR>
 <p id = "info">
 
 </p>
-
+!-->
 
 
 
