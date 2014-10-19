@@ -1,0 +1,122 @@
+<html>
+
+<head>
+<!--External Libraries!-->
+<script src="http://connect.soundcloud.com/sdk.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="libs/json2.js"></script>
+<script type="text/javascript" src="libs/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="libs/webgl-utils.js"></script>
+<script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
+<script type="text/javascript" src="libs/SCapi.js"></script>
+
+<!--My Scripts!-->
+<script src="LoopDittyGL.js"></script>
+<script src="EchoNestInteractor.js"></script>
+</head>
+
+<body onload="webGLStart();">
+
+<!--<script>
+SC.initialize({
+  client_id: 'b302c6dd719d6e25ac23e4c34335272c'
+});
+
+// stream track id 293
+SC.stream("/tracks/6142099", function(sound){
+  sound.play();
+});
+
+</script>!-->
+
+<table>
+<tr><td><h3>Audio File</h3></td><td><input type = "file" id = "audioInput"></td></tr>
+<tr><td><h3>Delay Series PCA File</h3></td><td><input type="file" id="pcaInput"></td></tr>
+</table>
+
+<button type = "button" onclick = "playAudio()">Play</button><BR>
+
+<p id = "text"></p>
+
+<h2><p id = "pagestatus"></p></h2><BR>
+<canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
+
+
+<script>
+	var source;
+	var analyser;
+	var context;
+	var fileInput = document.getElementById('pcaInput');
+	var result = document.getElementById('text');
+
+	function disconnect() {
+		source.stop();
+		source.disconnect(0);
+		analyser.disconnect(0);
+	}
+
+	fileInput.addEventListener('change', function(e) {
+		var file = fileInput.files[0];
+		var textType = /text.*/;
+
+		if (file.type.match(textType)) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var fields = reader.result.split(",");
+				var N = (fields.length-1)/4;
+				var X = numeric.rep([N, 4]);
+				var i = 0;
+				for (i = 0; i < N; i++) {
+					X[i][0] = parseFloat(fields[i*4]);
+					X[i][1] = parseFloat(fields[i*4+1]);
+					X[i][2] = parseFloat(fields[i*4+2]);
+					X[i][3] = parseFloat(fields[i*4+3]);
+				}
+				initGLBuffers(X);
+			}
+			reader.readAsText(file);	
+		} else {
+			result.innerHTML = "File not supported!"
+		}
+	});
+	
+	function playAudio() {
+		analyser = context.createAnalyser();
+		source.connect(analyser);
+		analyser.connect(context.destination);
+
+		startTime = context.currentTime;
+
+		source.start();
+		setTimeout(disconnect, source.buffer.duration * 1000 +1000);
+		
+		playTime = 0;
+		playIdx = 0;		
+		requestAnimFrame(function(){repaintWithContext(context)});
+	}
+	
+	var audioInput = document.getElementById('audioInput');
+	audioInput.addEventListener('change', function(e) {
+		var reader = new FileReader();
+		reader.onload = function(e) {
+		    var data = e.target.result;
+			context = new (window.AudioContext || window.webkitAudioContext)();
+			source = context.createBufferSource();
+			if(context.decodeAudioData) {
+				context.decodeAudioData(data, function(buffer) {
+				source.buffer = buffer;
+				}, function(e) {
+				    console.log(e);
+				});
+			} else {
+				source.buffer = context.createBuffer(data, false /*mixToMono*/);
+				playAudio();
+			}    
+		}		
+		reader.readAsArrayBuffer(audioInput.files[0]);
+	});
+</script>
+
+
+</body>
+</html>

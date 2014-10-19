@@ -7,6 +7,10 @@ var LOADING_CURVE = [[0,0,0,1],[0.346052,0.123809,0,2],[0.771862,0.53719,0,3],[0
 
 var COLORMAP_JET = [0, 0, 0.5625, 0, 0, 0.625, 0, 0, 0.6875, 0, 0, 0.75, 0, 0, 0.8125, 0, 0, 0.875, 0, 0, 0.9375, 0, 0, 1, 0, 0.0625, 1, 0, 0.125, 1, 0, 0.1875, 1, 0, 0.25, 1, 0, 0.3125, 1, 0, 0.375, 1, 0, 0.4375, 1, 0, 0.5, 1, 0, 0.5625, 1, 0, 0.625, 1, 0, 0.6875, 1, 0, 0.75, 1, 0, 0.8125, 1, 0, 0.875, 1, 0, 0.9375, 1, 0, 1, 1, 0.0625, 1, 0.9375, 0.125, 1, 0.875, 0.1875, 1, 0.8125, 0.25, 1, 0.75, 0.3125, 1, 0.6875, 0.375, 1, 0.625, 0.4375, 1, 0.5625, 0.5, 1, 0.5, 0.5625, 1, 0.4375, 0.625, 1, 0.375, 0.6875, 1, 0.3125, 0.75, 1, 0.25, 0.8125, 1, 0.1875, 0.875, 1, 0.125, 0.9375, 1, 0.0625, 1, 1, 0, 1, 0.9375, 0, 1, 0.875, 0, 1, 0.8125, 0, 1, 0.75, 0, 1, 0.6875, 0, 1, 0.625, 0, 1, 0.5625, 0, 1, 0.5, 0, 1, 0.4375, 0, 1, 0.375, 0, 1, 0.3125, 0, 1, 0.25, 0, 1, 0.1875, 0, 1, 0.125, 0, 1, 0.0625, 0, 1, 0, 0, 0.9375, 0, 0, 0.875, 0, 0, 0.8125, 0, 0, 0.75, 0, 0, 0.6875, 0, 0, 0.625, 0, 0, 0.5625, 0, 0, 0.5, 0, 0];
 
+var DelaySeries = [ [] ];
+var playIdx = 0;
+var playTime = 0;
+
 function initGL(canvas) {
     try {
         gl = canvas.getContext("experimental-webgl");
@@ -177,6 +181,9 @@ function initGLBuffers(X) {
     if (N <= 0) {
     	return;
     }
+    DelaySeries = X;
+    playIdx = N-1;
+    playTime = X[X.length-1][3];
     var i = 0;
     var ci = 0;
     var li = 0;
@@ -283,6 +290,11 @@ function drawScene() {
 	}
 
 	if (pointsVBO != -1 && colorsVBO != -1) {
+		//Find playing index with a linear search
+		//TODO: Improve this to binary search
+		while (DelaySeries[playIdx][3] < playTime && playIdx < DelaySeries.length - 1) {
+			playIdx++;
+		}
 		gl.bindBuffer(gl.ARRAY_BUFFER, pointsVBO);
 		gl.vertexAttribPointer(shaderProgram.vPosAttrib, pointsVBO.itemSize, gl.FLOAT, false, 0, 0);
 
@@ -290,16 +302,22 @@ function drawScene() {
 		gl.vertexAttribPointer(shaderProgram.vColorAttrib, colorsVBO.itemSize, gl.FLOAT, false, 0, 0);
 		setMatrixUniforms();
 		//Draw Points
-		gl.drawArrays(gl.POINTS, 0, pointsVBO.numItems);
+		gl.drawArrays(gl.POINTS, 0, playIdx+1);
 		//Draw Lines
-		gl.drawArrays(gl.LINES, 0, pointsVBO.numItems);
-		gl.drawArrays(gl.LINES, 1, pointsVBO.numItems - 1);
+		gl.drawArrays(gl.LINES, 0, playIdx+1);
+		gl.drawArrays(gl.LINES, 1, playIdx);
     }
 }
 
 
 function repaint() {
     drawScene();
+}
+
+function repaintWithContext(context) {
+	playTime = context.currentTime - startTime;
+	drawScene();
+	requestAnimFrame(function(){repaintWithContext(context)});
 }
 
 function webGLStart() {
