@@ -9,56 +9,89 @@
 <script type="text/javascript" src="libs/webgl-utils.js"></script>
 <script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
 <script type="text/javascript" src="libs/SCapi.js"></script>
+<script type="text/javascript" src="libs/api.js"></script>
 
 <!--My Scripts!-->
 <script src="LoopDittyGL.js"></script>
 <script src="EchoNestInteractor.js"></script>
 </head>
 
-<body onload="webGLStart();">
+<body onload="webGLStart();" text = "white" bgcolor = "black">
 
-<!--<script>
-SC.initialize({
-  client_id: 'b302c6dd719d6e25ac23e4c34335272c'
-});
-
-// stream track id 293
-SC.stream("/tracks/6142099", function(sound){
-  sound.play();
-});
-
-</script>!-->
-
-<b>Past SoundCloud URL Below</b>
+<table width = "100%">
+<tr><td><center><h1>Loop Ditty Music Visualizer</h1><h2>By <a href = "http://www.ctralie.com">Chris Tralie</a></h2></center></td>
+<td>
+<table>
+<tr><td><a href = "http://echonest.com/"><img src = "echoNestLogo.png"></a></td></tr>
+<tr><td><a href = "https://soundcloud.com"><img src = "soundCloudLogo.png"></a></td></tr>
+</table>
+</td></tr>
+</table>
+<b>Paste SoundCloud URL Below</b>
 <table><tr>
 <td><input id = "scurl" type = "text"></td>
 <td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
 <td><h3><p id = "pagestatus">Waiting for User Input...</p></h3></td>
 </tr>
 </table>
-
+<b>Click and drag to rotate animation</b><BR>
 <canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
 
 <p id = "trackinfo"></p>
 
-<!--For Debugging!-->
-<!--
-<BR>
-ORIGINAL:<BR>
-<p id = "original">
+<script>
+SC.initialize({
+  client_id: 'b302c6dd719d6e25ac23e4c34335272c'
+});
 
-</p>
+</script>
 
-<BR>
-INFO:<BR>
-<p id = "info">
+<!--https://developers.soundcloud.com/docs/api/html5-widget!-->
+<iframe id="sc-widget" src="https://w.soundcloud.com/player/?url=http://api.soundcloud.com/users/1539950/favorites" width="100%" height="150" scrolling="no" frameborder="no"></iframe>
+<script type="text/javascript">
+  (function(){
+    var widgetIframe = document.getElementById('sc-widget'),
+        widget       = SC.Widget(widgetIframe);
 
-</p>
-!-->
+    widget.bind(SC.Widget.Events.READY, function() {
+    });
+	widget.bind(SC.Widget.Events.PLAY, function() {
+		//When the sound starts playing, start refreshing the window
+	  	console.log("playing");
+	  	playIdx = 0;
+	  	requestAnimFrame(function(){repaintWithSCWidget(widget)});
+	});
+	widget.bind(SC.Widget.Events.SEEK, function() {
+		playIdx = 0;
+	});    
 
+  }());
+</script>
 
+<BR><BR>
 
-
-
+<table width = "500"><tr><td>Copyright <a href = "http://www.ctralie.com">Chris Tralie</a> 10/2014<BR></td>
+<td align = "right">
+Visitors: 
+<!-- Start of StatCounter Code  -->
+<script type="text/javascript">
+var sc_project=10080846; 
+var sc_invisible=0; 
+var sc_security="007c3773"; 
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="shopify
+analytics" href="http://statcounter.com/shopify/"
+target="_blank"><img class="statcounter"
+src="http://c.statcounter.com/10080846/0/007c3773/0/"
+alt="shopify analytics"></a></div></noscript>
+<!-- End of StatCounter Code -->
+</td>
+</tr>
+</table>
 </body>
 </html>

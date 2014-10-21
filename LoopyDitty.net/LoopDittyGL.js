@@ -320,6 +320,14 @@ function repaintWithContext(context) {
 	requestAnimFrame(function(){repaintWithContext(context)});
 }
 
+function repaintWithSCWidget(widget) {
+	widget.getPosition(function(time) {
+		playTime = time/1000.0;
+		drawScene();
+		requestAnimFrame(function(){repaintWithSCWidget(widget)});	
+	});
+}
+
 function webGLStart() {
     glcanvas = document.getElementById("LoopDittyGLCanvas");
     glcanvas.addEventListener('mousedown', makeClick);

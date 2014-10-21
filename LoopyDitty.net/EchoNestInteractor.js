@@ -12,11 +12,11 @@
 
 //TODO: Make these input variables
 var TimeWin = 5;
-var TimeHop = 0.05;
+var TimeHop = 0.2;
+var blowupFac = 10;//How many samples to linearly interpolate between
 
 //This function assumes that numericjs has been loaded
 function getSegmentsPCA(results) {
-	console.log("Getting segments PCA");
 	var segments = results.segments;
 	var NIn = segments.length;
 	if (NIn == 0) {
@@ -116,27 +116,32 @@ function getSegmentsPCA(results) {
 	
 	//Step 6: Store the first 3 principal components, and make the 4th
 	//component the time of occurrence
-	ret = numeric.rep([NOut, 4], 0);
+	Y = numeric.rep([NOut, 4], 0);
 	for (i = 0; i < NOut; i++) {
 		for (k = 0; k < 3; k++) {
-			ret[i][k] = X[i][k];
+			Y[i][k] = X[i][k];
 		}
-		ret[i][3] = tout[i];
+		Y[i][3] = tout[i];
+	}
+	
+	//Step 7: Linearly interpolate to make it smoother
+	var ret = numeric.rep([(NOut-1)*blowupFac+1, 4]);
+	var dt;
+	for (i = 0; i < NOut-1; i++) {
+		for (j = 0; j < blowupFac; j++) {
+			dt = (1.0*j)/blowupFac;
+			for (k = 0; k < 4; k++) {
+				ret[i*blowupFac + j][k] = dt*Y[i+1][k] + (1-dt)*Y[i][k];
+			}
+		}
+	}
+	for (k = 0; k < 4; k++) {
+		ret[ret.length-1][k] = Y[Y.length-1][k];
 	}
 	return ret;
 }
 
-function getSegmentsText(results) {
-	var pagestatus = document.getElementById("pagestatus");
-	pagestatus.innerHTML = "Computing PCA of Segments...";
-	var X = getSegmentsPCA(results);
-	pagestatus.innerHTML = "Allocating GL buffers...";
-	initGLBuffers(X);//Initialize the GL buffers
-	pagestatus.innerHTML = "Finished!!";
-	getEchoNestSongInfo(results.track);
-}
-
-var getEchoNestSongInfo = function(track) {
+function getEchoNestSongInfo(track) {
 	var trackinfo = document.getElementById("trackinfo");
 	var title = "Unknown";
 	var artist = "Unknown";
@@ -154,7 +159,39 @@ var getEchoNestSongInfo = function(track) {
 	str += "<tr><td><h3>Artist</h3></td><td><h3>" + artist + "</h3></td></tr>";
 	str += "</table></td></tr></table>";
 	trackinfo.innerHTML = str;
-};
+}
+
+function outputSegments(X) {
+	var pagestatus = document.getElementById("pagestatus");
+	var str = "";
+	var i;
+	var j;
+	for (i = 0; i < X.length; i++) {
+		for (j = 0; j < X[i].length; j++) {
+			str = str + X[i][j] + ",";
+		}
+		str = str + "<BR>\n";
+	}
+	pagestatus.innerHTML = str;
+}
+
+function getSegmentsText(results) {
+	//Update soundcloud widget with this song
+	var scurl = document.getElementById("scurl").value;
+    var widgetIframe = document.getElementById('sc-widget'),
+        widget       = SC.Widget(widgetIframe);
+    widget.load(scurl, {});
+    
+    //Load analysis data from echo nest
+	var pagestatus = document.getElementById("pagestatus");
+	pagestatus.innerHTML = "Computing 3D projection...";
+	var X = getSegmentsPCA(results);
+	pagestatus.innerHTML = "Allocating GL buffers...";
+	initGLBuffers(X);//Initialize the GL buffers
+	pagestatus.innerHTML = "Finished!!";
+	//getEchoNestSongInfo(results.track);
+	//outputSegments(X);
+}
 
 
 function setHeader(xhr) {
