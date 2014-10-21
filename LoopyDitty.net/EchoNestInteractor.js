@@ -10,18 +10,15 @@
 //https://soundcloud.com/steven-schon/ti-what-you-know-about-that-w-lyrics
 //https://soundcloud.com/mariano-a-pina/soulja-boy-turn-my-swag-on
 
-var ECHONESTKEY = "ECTXVZVAD1IMVG2DA";
-var retryCount = 5;
-var retryInterval = 3000;
-
 //TODO: Make these input variables
 var TimeWin = 5;
 var TimeHop = 0.05;
 
 //This function assumes that numericjs has been loaded
-function getSegmentsPCA(track) {
+function getSegmentsPCA(results) {
 	console.log("Getting segments PCA");
-	var NIn = track.analysis.segments.length;
+	var segments = results.segments;
+	var NIn = segments.length;
 	if (NIn == 0) {
 		return;
 	}
@@ -30,7 +27,7 @@ function getSegmentsPCA(track) {
 	//12 timbre + 12 pitch = 24
 	var Segs = numeric.rep([NIn, 24], 0);
 	var times = numeric.rep([NIn], 0);
-	times[0] = parseFloat(track.analysis.segments[0].duration);
+	times[0] = parseFloat(segments[0].duration);
 
 	//Step 1: Loop through the segments and place the cumulative sum
 	//of the durations and the pitch/timbral features in one array
@@ -38,8 +35,8 @@ function getSegmentsPCA(track) {
 	var j = 0;
 	var k = 0;
 	var str = "";
-	for (i = 0; i < track.analysis.segments.length; i++) {
-		var seg = track.analysis.segments[i];
+	for (i = 0; i < segments.length; i++) {
+		var seg = segments[i];
 		for (j = 0; j < 12; j++) {
 			Segs[i][j] = parseFloat(seg.timbre[j]);
 			Segs[i][j+12] = parseFloat(seg.pitches[j]);
@@ -129,74 +126,18 @@ function getSegmentsPCA(track) {
 	return ret;
 }
 
-
-//This function assumes that numericjs has been loaded
-function getSegmentsOnly(track) {
-	var NIn = track.analysis.segments.length;
-	if (NIn == 0) {
-		return;
-	}
-	
-	//Pre-allocate space for input and output arrays
-	//12 timbre + 12 pitch = 24
-	//Last dimension used to store timestamp
-	var Segs = numeric.rep([NIn, 25], 0);
-	var times = numeric.rep([NIn], 0);
-	times[0] = parseFloat(track.analysis.segments[0].duration);
-
-	console.log("Doing step 1...");
-	//Step 1: Loop through the segments and place the cumulative sum
-	//of the durations and the pitch/timbral features in one array
-	var i = 0;
-	var j = 0;
-	var k = 0;
-	var str = "";
-	for (i = 0; i < track.analysis.segments.length; i++) {
-		var seg = track.analysis.segments[i];
-		for (j = 0; j < 12; j++) {
-			Segs[i][j] = seg.timbre[j];
-			Segs[i][j+12] = seg.pitches[j];
-		}
-		if (i > 0) {
-			times[i] = times[i-1] + parseFloat(seg.duration);
-			Segs[i][25] = times[i];
-		}
-	}
-	return Segs;
-}
-
-<!--Copied and modified from echo nest remix!-->
-function getSegmentsText(track) {
+function getSegmentsText(results) {
 	var pagestatus = document.getElementById("pagestatus");
-	var X = getSegmentsPCA(track);
+	pagestatus.innerHTML = "Computing PCA of Segments...";
+	var X = getSegmentsPCA(results);
 	pagestatus.innerHTML = "Allocating GL buffers...";
 	initGLBuffers(X);//Initialize the GL buffers
-	/*var infoid = document.getElementById("info");
-	var text = "";
-	var i = 0;
-	var j = 0;
-	for (i = 0; i < X.length; i++ ) {
-		for (j = 0; j < X[i].length; j++) {
-			text += X[i][j] + " ";
-		}
-		text += "<BR>\n";
-	}
-	infoid.innerHTML = text;*/
-	
-	/*X = getSegmentsOnly(track);
-	var originalid = document.getElementById("original");
-	text = "";
-	for (i = 0; i < X.length; i++ ) {
-		for (j = 0; j < X[i].length; j++) {
-			text += X[i][j] + " ";
-		}
-		text += "<BR>\n";
-	}
-	originalid.innerHTML = text;*/
+	pagestatus.innerHTML = "Finished!!";
+	getEchoNestSongInfo(results.track);
 }
 
 var getEchoNestSongInfo = function(track) {
-	var pagestatus = document.getElementById("pagestatus");
+	var trackinfo = document.getElementById("trackinfo");
 	var title = "Unknown";
 	var artist = "Unknown";
 	str = "<table><tr><td>";
@@ -212,75 +153,28 @@ var getEchoNestSongInfo = function(track) {
 	str += "</td><td><table><tr><td><h3>Title</h3></td><td><h3>" + title + "</h3></td></tr>";
 	str += "<tr><td><h3>Artist</h3></td><td><h3>" + artist + "</h3></td></tr>";
 	str += "</table></td></tr></table>";
-	pagestatus.innerHTML = str;
+	trackinfo.innerHTML = str;
 };
 
-function lookForAnalysis(trackID) {
-    var url = 'http://developer.echonest.com/api/v4/track/profile?format=json&bucket=audio_summary';
-    var track;
-    
-	$.getJSON(url, {id:trackID, api_key:ECHONESTKEY}, function(data) {
-		var analysisURL = data.response.track.audio_summary.analysis_url;
-		track = data.response.track;
-		
-		// This call is proxied through the yahoo query engine.  
-		// This is temporary, but works.
-		$.getJSON("http://query.yahooapis.com/v1/public/yql", 
-			{ q: "select * from json where url=\"" + analysisURL + "\"", format: "json"}, 
-			function(data) {
-				var pagestatus = document.getElementById("pagestatus");
-				if (data.query.results != null) {
-					track.analysis = data.query.results.json;
-					console.log("Got analysis");
-					pagestatus.innerHTML = "Analysis data retrieved, computing projection...";
-					getSegmentsText(track);
-					getEchoNestSongInfo(track);
-				}
-				else {
-					retryCount = retryCount - 1;
-					retryInterval = retryInterval + 1000;
-					if (retryCount > 0) {
-						console.log('Analysis pending, trying again')
-						var strout = "EchoNest analysis data pending.";
-						var i;
-						for (i = 0; i < retryCount; i++) {
-							strout += ".";
-						}
-						pagestatus.innerHTML = strout;
-						setTimeout(function () {
-							lookForAnalysis(trackID);
-						}, retryInterval);
-					} else {
-						console.log('error', 'No analysis data returned:  try again, or try another trackID');   
-						pagestatus.innerHTML = "Error: Could not retrieve analysis data from EchoNest.  Try again, or try another song";
-					}
-				}
-		}); // end yahoo proxy getJson
-	});
-} // end lookForAnalysis
-<!--End copy and modify from echo nest remix!-->
 
-var getTRID = function(results) {
-	initGLBuffers(LOADING_CURVE);
+function setHeader(xhr) {
+	xhr.setRequestHeader('Content-Type', 'text/plain');
+}
+
+function querySoundCloudURL() {
 	var pagestatus = document.getElementById("pagestatus");
-	pagestatus.innerHTML = "Please wait, loading...";
-	retryCount = 5;
-	retryInterval = 2000;
-	lookForAnalysis(results.trid);
-};
-
-function loadSongUrl() {
-	var url = document.getElementById("urlin").value;
-
-    jQuery.getJSON('http://labs.echonest.com/SCAnalyzer/analyze',
-        {
-            id:url,
-        },
-		getTRID
-    ).error(function(){ 
-    	var pagestatus = document.getElementById("pagestatus");
-    	pagestatus.innerHTML = "<font color = 'red'><h3>ERROR Grabbing SoundCloud ID: Service Temporarily Down</h3></font>";
-    	var results;
-    	lookForAnalysis("TRYTXUG141F2431416");
+	pagestatus.innerHTML = "Grabbing Data from SoundCloud (this may take a moment)...";
+	var scurl = document.getElementById("scurl").value;
+    $.ajax({
+      url:  'http://fast-river-6374.herokuapp.com/',
+      type: 'GET',
+      data: {url: scurl},
+      dataType: 'json',
+      success: getSegmentsText,
+      error: function (xhr, ajaxOptions, thrownError) {
+        alert(xhr.status);
+        alert(thrownError);
+      },
+      beforeSend: setHeader
     });
 }

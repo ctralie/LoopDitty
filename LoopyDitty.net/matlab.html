@@ -73,6 +73,8 @@ SC.stream("/tracks/6142099", function(sound){
 					X[i][3] = parseFloat(fields[i*4+3]);
 				}
 				initGLBuffers(X);
+				var textArea = document.getElementById('text');
+				textArea.innerHTML = "<h2>Variance Explained: " + fields[fields.length-1] + "</h2><BR>";
 			}
 			reader.readAsText(file);	
 		} else {

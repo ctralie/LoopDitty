@@ -28,18 +28,18 @@ SC.stream("/tracks/6142099", function(sound){
 });
 
 </script>!-->
-<h1>In progress, please check back on Thursday 10/23/2014...</h1><BR><BR>
 
 <b>Past SoundCloud URL Below</b>
 <table><tr>
-<td><input id = "urlin" type = "text"></td>
-<td><button type = "button" onclick = "loadSongUrl()">Submit</button></td>
+<td><input id = "scurl" type = "text"></td>
+<td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
+<td><h3><p id = "pagestatus">Waiting for User Input...</p></h3></td>
 </tr>
 </table>
 
-<h2><p id = "pagestatus"></p></h2><BR>
 <canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
 
+<p id = "trackinfo"></p>
 
 <!--For Debugging!-->
 <!--
