@@ -19,7 +19,7 @@ function initGL(canvas) {
     } catch (e) {
     }
     if (!gl) {
-        alert("Could not initialise WebGL, sorry :-(");
+        alert("Could not initialise WebGL, sorry :-(.  Try a new version of chrome or firefox and make sure your newest graphics drivers are installed");
     }
 }
 

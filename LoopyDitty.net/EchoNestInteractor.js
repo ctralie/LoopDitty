@@ -362,4 +362,16 @@ function querySugarhillGang() {
 	querySoundCloudURL();
 }
 
+function queryTheBeatles() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/narzo-fernandez-maldonado-sanabria/the-beatles-let-it-be-live";
+	querySoundCloudURL();
+}
+
+function queryThePixies() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/whitewives/where-is-my-mind-the-pixies";
+	querySoundCloudURL();
+}
+
 
