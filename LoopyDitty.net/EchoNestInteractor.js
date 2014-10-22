@@ -1,18 +1,8 @@
 //Code for dealing with echo nest and SoundCloud
-//https://soundcloud.com/lebronkb24/lil-wayne-ft-robin-thicke-shooter 
-//https://soundcloud.com/chiddy-bang/fresh-like-us
-//https://soundcloud.com/chiddy-bang/kids-feat-mgmt-1
-//https://soundcloud.com/bodylanguage/raleigh-nc
-//https://soundcloud.com/cleopatra-recs/ready-for-the-world-oh-sheila
-//https://soundcloud.com/wiz-khalifa-7/work-hard-play-hard
-//https://soundcloud.com/lilmo_rep_the_y187/3-6-mafia-i-gotta-stay-fly-ft-young-buck-8ball-mjg
-//https://soundcloud.com/chris-finn-3/wale-clappers-feat-juicy-j
-//https://soundcloud.com/steven-schon/ti-what-you-know-about-that-w-lyrics
-//https://soundcloud.com/mariano-a-pina/soulja-boy-turn-my-swag-on
 
 //TODO: Make these input variables
-var TimeWin = 5;
-var TimeHop = 0.2;
+var TimeWin = 3.5;
+var TimeHop = 0.1;
 var blowupFac = 10;//How many samples to linearly interpolate between
 
 //This function assumes that numericjs has been loaded
@@ -58,18 +48,18 @@ function getSegmentsPCA(results) {
 	for (i = 0; i < NOut; i++) {
 		tout[i] = TimeHop*i;
 		weightSum = 0;
-		while ( (times[li] < tout[i] ) && (li < NIn - 1) ) {
+		while ( (times[li] < tout[i] - TimeWin ) && (li < NIn - 1) ) {
 			li++;
 		}
 		li = li - 1;
 		if (li < 0) {
 			li = 0;
 		}
-		while ( (times[ri] < tout[i] ) + (TimeWin && ri < NIn - 1) ) {
+		while ( (times[ri] < (tout[i] + TimeWin) && ri < NIn - 1) ) {
 			ri++;
 		}
 		for (j = li; j <= ri; j++) {
-			weight = numeric.exp([-(tout[i] -times[j])*(tout[i] -times[j])/(TimeWin*TimeWin)])[0];
+			weight = numeric.exp([-(tout[i] -times[j])*(tout[i] -times[j])/(TimeWin*TimeWin*2)])[0];
 			weightSum = weightSum + weight;
 			for (k = 0; k < 24; k++) {
 				X[i][k] = X[i][k] + weight*Segs[j][k];
@@ -124,7 +114,36 @@ function getSegmentsPCA(results) {
 		Y[i][3] = tout[i];
 	}
 	
-	//Step 7: Linearly interpolate to make it smoother
+	//Step 7: Subtract off mean and scale by standard deviation of each 
+	//component in the projected space
+	var mean = numeric.rep([3], 0);
+	for (i = 0; i < NOut; i++) {
+		for (k = 0; k < 3; k++) {
+			mean[k] += Y[i][k];
+		}
+	}
+	for (i = 0; i < NOut; i++) {
+		for (k = 0; k < 3; k++) {
+			Y[i][k] -= mean[k]/NOut;
+		}
+	}
+	var std = numeric.rep([3], 0);
+	for (i = 0; i < NOut; i++) {
+		for (k = 0; k < 3; k++) {
+			std[k] += (Y[i][k]-mean[k])*(Y[i][k]-mean[k]);
+		}
+	}
+	for (k = 0; k < 3; k++) {
+		std[k] = numeric.sqrt([std[k]/(NOut-1)])[0];
+	}
+	for (i = 0; i < NOut; i++) {
+		for (k = 0; k < 3; k++) {
+			Y[i][k] /= std[k];
+		}
+	}		
+	
+	
+	//Step 8: Linearly interpolate to make it smoother
 	var ret = numeric.rep([(NOut-1)*blowupFac+1, 4]);
 	var dt;
 	for (i = 0; i < NOut-1; i++) {
@@ -215,3 +234,132 @@ function querySoundCloudURL() {
       beforeSend: setHeader
     });
 }
+
+//Preset Examples
+function queryMichaelJackson() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/murray-feiss-tall-man/michael-jackson-bad";
+	querySoundCloudURL();
+}
+
+function queryHudsonMohawke() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/hudsonmohawke/demouse";
+	querySoundCloudURL();
+}
+
+function queryChiddyBang() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/chiddy-bang/kids-feat-mgmt-1";
+	querySoundCloudURL();
+}
+
+function queryTI() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/steven-schon/ti-what-you-know-about-that-w-lyrics";
+	querySoundCloudURL();
+}
+
+function queryBodyLanguage() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/bodylanguage/just-because";
+	querySoundCloudURL();
+}
+
+function queryDJNappy() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/doandroidsdance/go-dj-nappy-vs-benga-thugstep";
+	querySoundCloudURL();
+}
+
+function queryDuranDuran() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/windmaker100/duran-duran-rio";
+	querySoundCloudURL();
+}
+
+function queryMissyElliot() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/as-sbj/missy-elliot-lose-control";
+	querySoundCloudURL();
+}
+
+function queryWizKhalifa() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/wiz-khalifa-7/work-hard-play-hard";
+	querySoundCloudURL();
+}
+
+function queryEWF() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/nattaliaramos/september-earth-wind-and-fire";
+	querySoundCloudURL();
+}
+
+function queryAerosmith() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/irealmar/sweet-emotion-aerosmith";
+	querySoundCloudURL();
+}
+
+function queryRollingStones() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/tataflorentino/the-rolling-stones-sympathy";
+	querySoundCloudURL();
+}
+
+function queryDiannaRoss() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/thewhitekeys/upside-down-diana-ross-2013";
+	querySoundCloudURL();
+}
+
+function queryBeeGees() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/musicmetalape/bee-gees-stayin-alive-1";
+	querySoundCloudURL();
+}
+
+function queryTchaikovsky() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/msaly/tchaikovsky-valse-sentimentale";
+	querySoundCloudURL();
+}
+
+function queryMotorhead() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/immy619/motorhead-ace-of-spades-1";
+	querySoundCloudURL();
+}
+
+function queryBigSean() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/bigsean-1/10-high-feat-wiz-khalifa";
+	querySoundCloudURL();
+}
+
+function queryWillSmith() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/houseandelectro/will-smith-miami";
+	querySoundCloudURL();
+}
+
+function queryAlienAntFarm() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/yangstar89/alien-ant-farm-movies";
+	querySoundCloudURL();
+}
+
+function queryVanillaIce() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/cleopatra-recs/vanilla-ice-ice-ice-baby";
+	querySoundCloudURL();
+}
+
+function querySugarhillGang() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/maata808/sugarhill-gang-apache-jump-on-it";
+	querySoundCloudURL();
+}
+
+
