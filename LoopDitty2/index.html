@@ -1,0 +1,257 @@
+<html>
+
+<head>
+<!--External Libraries!-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script src="libs/json2.js"></script>
+<script type="text/javascript" src="libs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="libs/webgl-utils.js"></script>
+<script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
+
+<!--D3 stuff!-->
+<script src="libs/d3-collection.v0.1.min.js"></script>
+<script src="libs/d3-dispatch.v0.3.min.js"></script>
+<script src="libs/d3-dsv.v0.2.min.js"></script>
+<script src="libs/d3-request.min.js"></script>
+<script src="libs/d3.min.js"></script>
+
+<!--My Scripts!-->
+<script src="Cameras3D.js"></script>
+<script src="LoopDittyGL.js"></script>
+<script src="MusicFeatures.js"></script>
+</head>
+
+<body onload="webGLStart();">
+
+<h1>LoopDitty Geometric Music Visualizer</h1>
+
+<b>Paste SoundCloud URL Below</b>
+<table><tr>
+<td><input id = "scurl" type = "text"></td>
+<td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
+</tr>
+</table>
+
+
+<table>
+
+<tr>
+<td width = 800 bgcolor = "black">
+<div id = "pagestatus"><h3><font color = "red">Waiting for Input...</font></h3></div>
+</td>
+</tr>
+
+<tr><td>
+<table><tr><td>
+<canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
+</td></tr>
+<tr><td bgcolor = "black" width = 800>
+
+<div id = "scwidget">
+
+<!--https://developers.soundcloud.com/docs/api/html5-widget!-->
+<!--http://fiddle.jshell.net/Peeters_William/kpkdnrts/-->
+<iframe id = "scframe" width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/"></iframe>
+
+<script type="text/javascript">
+    var widgetIframe = document.getElementById('scframe');
+    var widget       = SC.Widget(widgetIframe);
+
+    widget.bind(SC.Widget.Events.READY, function() {
+    });
+	widget.bind(SC.Widget.Events.PLAY, function() {
+		//When the sound starts playing, start refreshing the window
+	  	console.log("playing");
+	  	playIdx = 0;
+    //requestAnimFrame(function(){repaintWithSCWidget(widget)});
+	});
+	widget.bind(SC.Widget.Events.SEEK, function() {
+		playIdx = 0;
+	});
+	
+	widget.load("https://soundcloud.com/immy619/motorhead-ace-of-spades-1", {});   
+
+</script>
+</div>
+
+
+<div id = "manualwidget">
+<input type="range" id="timeSlider" min = "0" max = "1000" value = "0" step = "1" style="width:760px"><br>
+<table>
+<tr>
+<td><button type = "button" onclick = "playAudioButton()">Play</button></td>
+<td><button type = "button" onclick = "pauseAudio()">Pause</button></td>
+</tr>
+</table>
+</div>
+<!--By default, hide the custom audio widget!-->
+<script>
+document.getElementById("manualwidget").style.visibility="hidden";
+</script>
+
+
+</td></tr>
+</table>
+
+
+</td>
+<td>
+
+
+<table>
+<tr><td>Display Time Edges</td><td>
+<input type="checkbox" id="timeEdgesCheckbox" />
+</td>
+</tr>
+</table>
+
+
+</td>
+</tr></table>
+
+<script>
+    var waitingDisp = document.getElementById("pagestatus");
+    var source = null;
+    var analyser = null;
+    var context = new (window.AudioContext || window.webkitAudioContext)();
+    var buffer = null;
+    var fileInput = document.getElementById('geomModelInput');
+    var result = document.getElementById('text');
+    
+    var displayTimeEdges = true;
+
+    function disconnect() {
+        source.stop();
+        source.disconnect(0);
+        analyser.disconnect(0);
+    }
+    
+    function parseText(fields) {
+        var varExplainedText = document.getElementById('varExplainedText');
+        var v = Math.round(1000*parseFloat(fields[0]));                
+        varExplainedText.innerHTML = "" + v/10 + "%";
+        var NCenters = parseInt(fields[1]);
+        var idx = 2;
+        var i = 0;
+        centers = [];
+        dims = [];
+        for (i = 0; i < NCenters; i++) {
+            centers.push(parseInt(fields[idx]));
+            idx++;
+            dims.push(parseInt(fields[idx]));
+            idx++;
+        }
+        var NEdges = parseInt(fields[idx]);
+        idx++;
+        edges = numeric.rep([NEdges, 2]);
+        var e1, e2;
+        for (i = 0; i < NEdges; i++) {
+            e1 = parseInt(fields[idx]);
+            idx++;
+            e2 = parseInt(fields[idx]);
+            idx++;
+            edges[i] = [e1, e2];
+        }
+        var N = parseInt(fields[idx]);
+        idx++;
+        var X = numeric.rep([N, 5]);
+        for (i = 0; i < N; i++) {
+            X[i][0] = parseFloat(fields[idx]);idx++;
+            X[i][1] = parseFloat(fields[idx]);idx++;
+            X[i][2] = parseFloat(fields[idx]);idx++;
+            X[i][3] = parseFloat(fields[idx]);idx++;
+            X[i][4] = parseInt(fields[idx]);idx++;
+        }
+        initGLBuffers(X);
+    }
+    
+    function loadSong(fields, songfilename) {        
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', songfilename, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function(err) {
+            context.decodeAudioData(this.response, function(buff) {
+            buffer = buff;
+            parseText(fields);      
+            loading = false;
+            waitingDisp.innerHTML = "<h3><font color = \"#00ff00\">Ready</font></h3>";
+            }, function(e) {
+                console.log(e);
+            });
+        };
+        loading = true;
+        ndots = 0;
+        changeLoad();
+        xhr.send();
+    }
+
+
+    
+    function playAudioButton() {
+        if (!playing) {
+            //Prevent the user from accidentally playing multiple audio streams
+            playAudio();
+        }
+    }
+    
+    function playAudio() {
+        if (context === null) {
+            return;
+        }
+        playing = true;
+        console.log("Playing audio, offsetTime = " + offsetTime);
+        source = context.createBufferSource();
+        source.buffer = buffer;
+        analyser = context.createAnalyser();
+        source.connect(analyser);
+        analyser.connect(context.destination);
+
+        startTime = context.currentTime;
+
+        //setTimeout(disconnect, source.buffer.duration * 1000 +1000);
+        
+        source.start(context.currentTime, offsetTime, buffer.duration - offsetTime);
+        
+        playIdx = 0;
+        requestAnimFrame(function(){repaintWithContext(context)});
+    }
+    
+    function pauseAudio() {
+        console.log("Pausing");
+        if (source === null) {
+            return;
+        }
+        playing = false;
+        source.stop();
+        offsetTime = context.currentTime - startTime + offsetTime;
+    }
+    
+
+    
+    var timeSlider = document.getElementById('timeSlider');
+    timeSlider.addEventListener('change', function(e) {
+        if (buffer === null) {
+            return;
+        }
+        offsetTime = buffer.duration*parseFloat(timeSlider.value)/1000.0;
+        playIdx = 0;
+        requestAnimFrame(function(){repaintWithContext(context)});
+        if (playing) {
+            source.stop();
+            playAudio();
+        }
+    });
+    
+    var timeEdgesCheckbox = document.getElementById('timeEdgesCheckbox');
+    timeEdgesCheckbox.addEventListener('change', function(e) {
+        displayTimeEdges = timeEdgesCheckbox.checked;
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    timeEdgesCheckbox.checked = true;
+
+</script>
+
+
+</body>
+</html>
