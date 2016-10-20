@@ -28,105 +28,137 @@ function changeReady() {
 }
 
 
+//Parameters for doing PCA on music
 var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false};
+
+var results = null;
 
 
 //        res = {'hopSize':s.hopSize, 'Fs':s.Fs, 'MFCC':pretty_floats(MFCC.tolist()), 'Chroma':pretty_floats(Chroma.tolist()), 'Centroid':pretty_floats(Centroid.tolist()), 'Roloff':pretty_floats(Roloff.tolist()), 'Flux':pretty_floats(Flux.tolist()), 'ZeroCrossings':pretty_floats(ZeroCrossings.tolist())}
 //This function assumes that numericjs has been loaded
-function getDelaySeriesPCA(results) {
-    var hopSize = results.hopSize;
-    var Fs = results.Fs;
+function getDelaySeriesPCA() {
+    var hopSize = parseFloat(results.hopSize);
+    var Fs = parseFloat(results.Fs);
+    var hopSizeSec = hopSize/Fs;
     var NIn = results.Flux[0].length;
     if (NIn == 0) {
         return;
     }
     
+    //First figure out how many dimensions there are
+    var dim = 0;
+    if (MusicParams.usingMFCC) {
+        dim += results.MFCC.length;
+    }
+    if (MusicParams.usingChroma) {
+        dim += results.Chroma.length;
+    }
+    if (MusicParams.usingRoloff) {
+        dim++;
+    }
+    if (MusicParams.usingFlux) {
+        dim++;
+    }
+    if (MusicParams.usingZeroCrossings) {
+        dim++;
+    }
     
     //Pre-allocate space for input and output arrays
-    //12 timbre + 12 pitch = 24
-    var Segs = numeric.rep([NIn, 24], 0);
-    var times = numeric.rep([NIn], 0);
-    times[0] = parseFloat(segments[0].duration);
+    var Segs = numeric.rep([NIn, dim], 0);
 
-    //Step 1: Loop through the segments and place the cumulative sum
-    //of the durations and the pitch/timbral features in one array
+    //Step 1: Loop through and copy all of the fields into the segments
     var i = 0;
     var j = 0;
     var k = 0;
-    var str = "";
-    for (i = 0; i < segments.length; i++) {
-        var seg = segments[i];
-        for (j = 0; j < 12; j++) {
-            Segs[i][j] = parseFloat(seg.timbre[j]);
-            Segs[i][j+12] = parseFloat(seg.pitches[j]);
+    for (i = 0; i < NIn; i++) {
+        j = 0;
+        if (MusicParams.usingMFCC) {
+            for (k = 0; k < results.MFCC.length; k++) {
+                Segs[i, j] = parseFloat(results.MFCC[k][i]);
+                j++;
+            }
         }
-        if (i > 0) {
-            times[i] = times[i-1] + parseFloat(seg.duration);
+        if (MusicParams.usingChroma) {
+            for (k = 0; k < results.Chroma.length; k++) {
+                Segs[i, j] = parseFloat(results.MFCC[k][i]);
+                j++;
+            }
+        }
+        if (MusicParams.usingRoloff) {
+            Segs[i, j] = parseFloat(results.Roloff[0][i]);
+            j++;
+        }
+        if (MusicParams.usingFlux) {
+            Segs[i, j] = parseFloat(results.Flux[0][i]);
+            j++;
+        }
+        if (MusicParams.usingZeroCrossings) {
+            Segs[i, j] = parseFloat(results.ZeroCrossings[0][i]);
+            j++;
         }
     }
 
-    //Step 2: Loop through and average features within each window    
+    //Step 2: Loop through and take the average and standard deviation
+    //of each feature in a window
+    
     //Allocate output variables
-    var NOut = numeric.floor([(times[NIn-1] - TimeWin)/TimeHop])[0];
-    var X = numeric.rep([NOut, 24], 0);
+    var Win = Math.floor(MusicParams.TimeWin/hopSizeSec);
+    Win = Math.max(Win, 2);
+    var NOut = NIn - Win + 1;
+    var X = numeric.rep([NOut, dim*2], 0);
     var tout = numeric.rep([NOut], 0);
-    var li = 0
-    var ri = 0;
-    var weightSum = 0;
-    var weight = 0;
     for (i = 0; i < NOut; i++) {
-        tout[i] = TimeHop*i;
-        weightSum = 0;
-        while ( (times[li] < tout[i] - TimeWin ) && (li < NIn - 1) ) {
-            li++;
-        }
-        li = li - 1;
-        if (li < 0) {
-            li = 0;
-        }
-        while ( (times[ri] < (tout[i] + TimeWin) && ri < NIn - 1) ) {
-            ri++;
-        }
-        for (j = li; j <= ri; j++) {
-            weight = numeric.exp([-(tout[i] -times[j])*(tout[i] -times[j])/(TimeWin*TimeWin*2)])[0];
-            weightSum = weightSum + weight;
-            for (k = 0; k < 24; k++) {
-                X[i][k] = X[i][k] + weight*Segs[j][k];
+        tout[i] = hopSizeSec*i;
+        //Compute means
+        for (j = i; j < i+Win; j++) {
+            for (k = 0; k < dim; k++) {
+                X[i][k] = X[i][k] + Segs[j][k];
             }
         }
-        for (k = 0; k < 24; k++) {
-            X[i][k] = X[i][k]/weightSum;
+        for (k = 0; k < dim; k++) {
+            X[i][k] = X[i][k]/Win;
+        }
+    }
+    for (i = 0; i < NOut; i++) {
+        //Compute standard deviations
+        for (j = i; j < i+Win; j++) {
+            for (k = 0; k < dim; k++) {
+                X[i][k+dim] += (X[i][k] - Segs[j][k])*(X[i][k] - Segs[j][k]);
+            }
+        }
+        for (k = 0; k < dim; k++) {
+            X[i][k+dim] = Math.sqrt(X[i][k+dim]/(Win-1));
         }
     }
     
-    //Step 3: Compute and subtract off mean
-    var mean = numeric.rep([24], 0);
+    //Step 3: Compute and subtract off mean of each dimension
+    var mean = numeric.rep([dim*2], 0);
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 24; k++) {
+        for (k = 0; k < dim*2; k++) {
             mean[k] += X[i][k];
         }
     }
-    for (var k = 0; k < 24; k++) {
+    for (var k = 0; k < dim*2; k++) {
         mean[k] /= NOut;
     }
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 24; k++) {
+        for (k = 0; k < dim*2; k++) {
             X[i][k] -= mean[k];
         }
     }
     
     //Step 4: Compute standard deviation and scale every component
-    var std = numeric.rep([24], 0);
+    var std = numeric.rep([dim*2], 0);
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 24; k++) {
+        for (k = 0; k < dim*2; k++) {
             std[k] += (X[i][k]-mean[k])*(X[i][k]-mean[k]);
         }
     }
-    for (k = 0; k < 24; k++) {
+    for (k = 0; k < dim*2; k++) {
         std[k] = numeric.sqrt([std[k]/(NOut-1)])[0];
     }
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 24; k++) {
+        for (k = 0; k < dim*2; k++) {
             X[i][k] /= std[k];
         }
     }    
@@ -174,22 +206,7 @@ function getDelaySeriesPCA(results) {
         }
     }        
     
-    
-    //Step 8: Linearly interpolate to make it smoother
-    var ret = numeric.rep([(NOut-1)*blowupFac+1, 4]);
-    var dt;
-    for (i = 0; i < NOut-1; i++) {
-        for (j = 0; j < blowupFac; j++) {
-            dt = (1.0*j)/blowupFac;
-            for (k = 0; k < 4; k++) {
-                ret[i*blowupFac + j][k] = dt*Y[i+1][k] + (1-dt)*Y[i][k];
-            }
-        }
-    }
-    for (k = 0; k < 4; k++) {
-        ret[ret.length-1][k] = Y[Y.length-1][k];
-    }
-    return ret;
+    return Y;
 }
 
 
@@ -207,20 +224,20 @@ function outputSegments(X) {
     pagestatus.innerHTML = str;
 }
 
-function processSoundcloudResults(results) {
+function processSoundcloudResults(res) {
+    results = res;
     //Update soundcloud widget with this song
     var scurl = document.getElementById("scurl").value;
-    var widgetIframe = document.getElementById('sc-widget'),
-        widget       = SC.Widget(widgetIframe);
-    widget.load(scurl, {});
-    
+
     //Load analysis data from echo nest
     var pagestatus = document.getElementById("pagestatus");
     loadString = "Computing 3D projection";
     loadColor = "yellow"
-    var X = getDelaySeriesPCA(results);
+    var X = getDelaySeriesPCA();
     loadString = "Allocating GL buffers";
     initGLBuffers(X);//Initialize the GL buffers    
+    loadString = "Loading audio";
+    //TODO: Load audio buffer from mp3 file
     loading = false;
 }
 
@@ -237,7 +254,8 @@ function querySoundCloudURL() {
     changeLoad();
     var scurl = document.getElementById("scurl").value;
     $.ajax({
-      url:  'http://loopditty.herokuapp.com/',
+      //url:  'http://loopditty.herokuapp.com/',
+      url: 'http://127.0.0.1:5000/',
       type: 'GET',
       data: {url: scurl},
       dataType: 'json',

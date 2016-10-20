@@ -3,8 +3,8 @@
 <head>
 <!--External Libraries!-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="https://w.soundcloud.com/player/api.js"></script>
-<script src="libs/json2.js"></script>
+<!--<script src="http://connect.soundcloud.com/sdk.js"></script>-->
+<script src="https://connect.soundcloud.com/sdk/sdk-3.1.2.js"></script>
 <script type="text/javascript" src="libs/gl-matrix-min.js"></script>
 <script type="text/javascript" src="libs/webgl-utils.js"></script>
 <script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
@@ -31,6 +31,7 @@
 <td><input id = "scurl" type = "text"></td>
 <td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
 </tr>
+<tr><td><h3>Audio File</h3></td><td><input type = "file" id = "audioInput"></td></tr>
 </table>
 
 
@@ -50,29 +51,49 @@
 
 <div id = "scwidget">
 
+<iframe width="100%" height="166" scrolling="no" frameborder="no" ></iframe>
+
 <!--https://developers.soundcloud.com/docs/api/html5-widget!-->
 <!--http://fiddle.jshell.net/Peeters_William/kpkdnrts/-->
-<iframe id = "scframe" width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/"></iframe>
 
-<script type="text/javascript">
-    var widgetIframe = document.getElementById('scframe');
-    var widget       = SC.Widget(widgetIframe);
+<script>
+var track_url = 'https://soundcloud.com/bodylanguage/just-because';
+SC.oEmbed(track_url, { auto_play: false }).then(function(oEmbed) {
+  var w = document.getElementById("scwidget");
+  w.innerHTML = oEmbed.html;
+  var w = document.getElementsByTagName("iframe")[0];
+  w.height = 150;
+});
+</script>
 
-    widget.bind(SC.Widget.Events.READY, function() {
-    });
-	widget.bind(SC.Widget.Events.PLAY, function() {
-		//When the sound starts playing, start refreshing the window
-	  	console.log("playing");
-	  	playIdx = 0;
-    //requestAnimFrame(function(){repaintWithSCWidget(widget)});
-	});
-	widget.bind(SC.Widget.Events.SEEK, function() {
-		playIdx = 0;
-	});
-	
-	widget.load("https://soundcloud.com/immy619/motorhead-ace-of-spades-1", {});   
+<script>
+
+/*SC.stream(track_url).then(function(player) {
+    console.log(player);
+}
+);*/
 
 </script>
+
+<!--<script type="text/javascript">-->
+<!--    var widgetIframe = document.getElementById('scframe');-->
+<!--    var widget       = SC.Widget(widgetIframe);-->
+
+<!--    widget.bind(SC.Widget.Events.READY, function() {-->
+<!--    });-->
+<!--	widget.bind(SC.Widget.Events.PLAY, function() {-->
+<!--		//When the sound starts playing, start refreshing the window-->
+<!--	  	console.log("playing");-->
+<!--	  	playIdx = 0;-->
+<!--    //requestAnimFrame(function(){repaintWithSCWidget(widget)});-->
+<!--	});-->
+<!--	widget.bind(SC.Widget.Events.SEEK, function() {-->
+<!--		playIdx = 0;-->
+<!--	});-->
+<!--	-->
+<!--	//widget.load("https://soundcloud.com/immy619/motorhead-ace-of-spades-1", {});   -->
+
+<!--</script>-->
 </div>
 
 
@@ -227,6 +248,25 @@ document.getElementById("manualwidget").style.visibility="hidden";
         offsetTime = context.currentTime - startTime + offsetTime;
     }
     
+
+    var audioInput = document.getElementById('audioInput');
+    audioInput.addEventListener('change', function(e) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var data = e.target.result;            
+            if(context.decodeAudioData) {
+                context.decodeAudioData(data, function(buff) {
+                buffer = buff;
+                }, function(e) {
+                    console.log(e);
+                });
+            } else {
+                buffer = context.createBuffer(data, false /*mixToMono*/);
+                playAudio();
+            }    
+        }        
+        reader.readAsArrayBuffer(audioInput.files[0]);
+    });
 
     
     var timeSlider = document.getElementById('timeSlider');
