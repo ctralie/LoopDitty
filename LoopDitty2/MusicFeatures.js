@@ -29,18 +29,20 @@ function changeReady() {
 
 
 //Parameters for doing PCA on music
-var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false};
+var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false};
 
-var results = null;
+var musicFeatures = null;
 
 
 //        res = {'hopSize':s.hopSize, 'Fs':s.Fs, 'MFCC':pretty_floats(MFCC.tolist()), 'Chroma':pretty_floats(Chroma.tolist()), 'Centroid':pretty_floats(Centroid.tolist()), 'Roloff':pretty_floats(Roloff.tolist()), 'Flux':pretty_floats(Flux.tolist()), 'ZeroCrossings':pretty_floats(ZeroCrossings.tolist())}
 //This function assumes that numericjs has been loaded
 function getDelaySeriesPCA() {
-    var hopSize = parseFloat(results.hopSize);
-    var Fs = parseFloat(results.Fs);
+    loadString = "Computing 3D projection";
+    loadColor = "yellow";
+    var hopSize = parseFloat(musicFeatures.hopSize);
+    var Fs = parseFloat(musicFeatures.Fs);
     var hopSizeSec = hopSize/Fs;
-    var NIn = results.Flux[0].length;
+    var NIn = musicFeatures.Flux[0].length;
     if (NIn == 0) {
         return;
     }
@@ -48,10 +50,10 @@ function getDelaySeriesPCA() {
     //First figure out how many dimensions there are
     var dim = 0;
     if (MusicParams.usingMFCC) {
-        dim += results.MFCC.length;
+        dim += musicFeatures.MFCC.length;
     }
     if (MusicParams.usingChroma) {
-        dim += results.Chroma.length;
+        dim += musicFeatures.Chroma.length;
     }
     if (MusicParams.usingRoloff) {
         dim++;
@@ -64,121 +66,145 @@ function getDelaySeriesPCA() {
     }
     
     //Pre-allocate space for input and output arrays
-    var Segs = numeric.rep([NIn, dim], 0);
+    loadString = "Copying Fields / Computing Derivatives";
+    var Segs = numeric.rep([NIn, dim*2], 0);
 
     //Step 1: Loop through and copy all of the fields into the segments
-    var i = 0;
-    var j = 0;
-    var k = 0;
+    var i = 0;//Used to index window
+    var j = 0;//Used to index delay
+    var k = 0;//Used to index dimension
     for (i = 0; i < NIn; i++) {
         j = 0;
         if (MusicParams.usingMFCC) {
-            for (k = 0; k < results.MFCC.length; k++) {
-                Segs[i, j] = parseFloat(results.MFCC[k][i]);
+            for (k = 0; k < musicFeatures.MFCC.length; k++) {
+                Segs[i][j] = parseFloat(musicFeatures.MFCC[k][i]);
                 j++;
             }
         }
         if (MusicParams.usingChroma) {
-            for (k = 0; k < results.Chroma.length; k++) {
-                Segs[i, j] = parseFloat(results.MFCC[k][i]);
+            for (k = 0; k < musicFeatures.Chroma.length; k++) {
+                Segs[i][j] = parseFloat(musicFeatures.MFCC[k][i]);
                 j++;
             }
         }
         if (MusicParams.usingRoloff) {
-            Segs[i, j] = parseFloat(results.Roloff[0][i]);
+            Segs[i][j] = parseFloat(musicFeatures.Roloff[0][i]);
             j++;
         }
         if (MusicParams.usingFlux) {
-            Segs[i, j] = parseFloat(results.Flux[0][i]);
+            Segs[i][j] = parseFloat(musicFeatures.Flux[0][i]);
             j++;
         }
         if (MusicParams.usingZeroCrossings) {
-            Segs[i, j] = parseFloat(results.ZeroCrossings[0][i]);
+            Segs[i][j] = parseFloat(musicFeatures.ZeroCrossings[0][i]);
             j++;
         }
     }
-
-    //Step 2: Loop through and take the average and standard deviation
-    //of each feature in a window
     
+    //Step 2: Compute magnitude discrete derivatives along each dimension
+    //and put them in the second half of the dimensions (cumulative sum
+    //of these is like total variation)
+    for (i = 0; i < NIn-1; i++) {
+        for (k = 0; k < dim; k++) {
+            Segs[i][dim+k] = Math.abs(Segs[i+1][k] - Segs[i][k]);
+        }
+    }
+    dim = dim*2; //From now on, there are twice as many dimensions
+    //(raw feature and derivative)
+
+    
+    //Step 3: Loop through and take the average of the normal and 
+    //derivative features in the window
+    loadString = "Computing block means";
     //Allocate output variables
     var Win = Math.floor(MusicParams.TimeWin/hopSizeSec);
     Win = Math.max(Win, 2);
     var NOut = NIn - Win + 1;
-    var X = numeric.rep([NOut, dim*2], 0);
+    var X = numeric.rep([NOut, dim], 0);
     var tout = numeric.rep([NOut], 0);
-    for (i = 0; i < NOut; i++) {
-        tout[i] = hopSizeSec*i;
-        //Compute means
-        for (j = i; j < i+Win; j++) {
-            for (k = 0; k < dim; k++) {
-                X[i][k] = X[i][k] + Segs[j][k];
-            }
-        }
+    //Variables used for fast cumulative sums with mean
+    var cumsum = numeric.rep([dim], 0);
+    //Setup for sliding window average
+    for (j = 0; j < Win; j++) {
         for (k = 0; k < dim; k++) {
-            X[i][k] = X[i][k]/Win;
+            cumsum[k] += Segs[j][k];
         }
     }
-    for (i = 0; i < NOut; i++) {
-        //Compute standard deviations
-        for (j = i; j < i+Win; j++) {
-            for (k = 0; k < dim; k++) {
-                X[i][k+dim] += (X[i][k] - Segs[j][k])*(X[i][k] - Segs[j][k]);
-            }
-        }
+    //Compute the first mean
+    for (k = 0; k < dim; k++) {
+        X[0][k] = cumsum[k] / Win;
+    }
+    
+    //Compute the rest of the means
+    for (i = 1; i < NOut; i++) {
+        tout[i] = hopSizeSec*i;
+        //Subtract off oldest part and add newest part
+        //to get new sliding window sum
         for (k = 0; k < dim; k++) {
-            X[i][k+dim] = Math.sqrt(X[i][k+dim]/(Win-1));
+            cumsum[k] -= Segs[i-1][k];
+            cumsum[k] += Segs[i+Win-1][k];
+            X[i][k] = cumsum[k] / Win;
         }
     }
     
-    //Step 3: Compute and subtract off mean of each dimension
-    var mean = numeric.rep([dim*2], 0);
+    //Step 4: Compute and subtract off mean of each dimension
+    loadString = "Normalizing";
+    var mean = numeric.rep([dim], 0);
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < dim*2; k++) {
+        for (k = 0; k < dim; k++) {
             mean[k] += X[i][k];
         }
     }
-    for (var k = 0; k < dim*2; k++) {
+    for (var k = 0; k < dim; k++) {
         mean[k] /= NOut;
     }
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < dim*2; k++) {
+        for (k = 0; k < dim; k++) {
             X[i][k] -= mean[k];
         }
     }
     
-    //Step 4: Compute standard deviation and scale every component
-    var std = numeric.rep([dim*2], 0);
+    //Step 5: Compute standard deviation and scale every component
+    var std = numeric.rep([dim], 0);
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < dim*2; k++) {
-            std[k] += (X[i][k]-mean[k])*(X[i][k]-mean[k]);
+        for (k = 0; k < dim; k++) {
+            std[k] += X[i][k]*X[i][k];
         }
     }
-    for (k = 0; k < dim*2; k++) {
-        std[k] = numeric.sqrt([std[k]/(NOut-1)])[0];
+    for (k = 0; k < dim; k++) {
+        std[k] = Math.sqrt(std[k]/(NOut-1));
+        if (std[k] <= 0) {
+            std[k] = 1; //Prevent divide by zero
+        }
     }
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < dim*2; k++) {
+        for (k = 0; k < dim; k++) {
             X[i][k] /= std[k];
         }
-    }    
+    }
     
-    //Step 5: Do PCA
-    B = numeric.dot(numeric.transpose(X), X);
-    E = numeric.eig(B).E.x;
-    X = numeric.dot(X, E);
+    //Step 5.5: If the user so chooses, do sphere normalization
+    //TODO: Finish this
     
-    //Step 6: Store the first 3 principal components, and make the 4th
+    //Step 6: Do PCA
+    loadString = "Computing PCA";
+    //NOTE: It's possible to have 3 or fewer features based on user
+    //choices, in which case PCA can be skipped
+    if (dim > 3) { 
+        X = doPCA(X, 3, 100);
+    }
+    
+    //Step 7: Store the first 3 principal components, and make the 4th
     //component the time of occurrence
     Y = numeric.rep([NOut, 4], 0);
     for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 3; k++) {
+        for (k = 0; k < X[i].length; k++) {
             Y[i][k] = X[i][k];
         }
         Y[i][3] = tout[i];
     }
     
-    //Step 7: Subtract off mean and scale by standard deviation of each 
+    //Step 8: Subtract off mean and scale by standard deviation of each 
     //component in the projected space
     var mean = numeric.rep([3], 0);
     for (i = 0; i < NOut; i++) {
@@ -198,15 +224,19 @@ function getDelaySeriesPCA() {
         }
     }
     for (k = 0; k < 3; k++) {
-        std[k] = numeric.sqrt([std[k]/(NOut-1)])[0];
+        std[k] = Math.sqrt(std[k]/(NOut-1));
+        if (std[k] == 0) {
+            std[k] = 1;
+        }
     }
     for (i = 0; i < NOut; i++) {
         for (k = 0; k < 3; k++) {
             Y[i][k] /= std[k];
         }
-    }        
-    
-    return Y;
+    }
+    loadString = "Initializing OpenGL";
+    initGLBuffers(Y);
+    loading = false;
 }
 
 
@@ -225,20 +255,12 @@ function outputSegments(X) {
 }
 
 function processSoundcloudResults(res) {
-    results = res;
+    musicFeatures = res;
     //Update soundcloud widget with this song
     var scurl = document.getElementById("scurl").value;
 
     //Load analysis data from echo nest
-    var pagestatus = document.getElementById("pagestatus");
-    loadString = "Computing 3D projection";
-    loadColor = "yellow"
-    var X = getDelaySeriesPCA();
-    loadString = "Allocating GL buffers";
-    initGLBuffers(X);//Initialize the GL buffers    
-    loadString = "Loading audio";
-    //TODO: Load audio buffer from mp3 file
-    loading = false;
+    setTimeout(getDelaySeriesPCA, 1);
 }
 
 
