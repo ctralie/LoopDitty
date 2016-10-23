@@ -75,3 +75,17 @@ function doPCA(X, num, NIters) {
     }
     return res;
 }
+
+function mat4Str(m) {
+	var str = "";
+	for (var i = 0; i < 16; i++) {
+		var col = i%4;
+		var row = (i-col)/4;
+		if (row > 0 && col == 0) {
+			str += "\n";
+		}
+		str += m[col*4+row].toFixed(2) + " ";
+	}
+	return str;
+}
+

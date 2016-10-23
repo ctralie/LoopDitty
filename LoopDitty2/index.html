@@ -23,6 +23,31 @@
 <script src="MatrixUtilities.js"></script>
 </head>
 
+<style>
+button {
+  outline: none;
+  background-color: #bfbfbf;
+  border: 2px solid #000;
+  color: #000;
+  padding: 10px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 6px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+#sourceorder {
+  font-size: 22px;
+}
+
+button:hover {
+  opacity: 0.6;
+}
+</style>
+
 <body onload="webGLStart();">
 
 <h1>LoopDitty Geometric Music Visualizer</h1>
@@ -51,35 +76,15 @@
 <tr><td bgcolor = "black" width = 800>
 
 
-<!--https://developers.soundcloud.com/docs/api/html5-widget!-->
-<!--http://fiddle.jshell.net/Peeters_William/kpkdnrts/-->
-<!--<div id = "scwidget">-->
-<!--<iframe width="100%" height="166" scrolling="no" frameborder="no" ></iframe>-->
-<!--<script>-->
-<!--var track_url = 'https://soundcloud.com/bodylanguage/just-because';-->
-<!--SC.oEmbed(track_url, { auto_play: false }).then(function(oEmbed) {-->
-<!--  var w = document.getElementById("scwidget");-->
-<!--  w.innerHTML = oEmbed.html;-->
-<!--  var w = document.getElementsByTagName("iframe")[0];-->
-<!--  w.height = 150;-->
-<!--});-->
-<!--</script>-->
-<!--</div>-->
-
-
 <div id = "manualwidget">
 <input type="range" id="timeSlider" min = "0" max = "1000" value = "0" step = "1" style="width:760px"><br>
 <table>
 <tr>
-<td><button type = "button" onclick = "playAudioButton()">Play</button></td>
-<td><button type = "button" onclick = "pauseAudio()">Pause</button></td>
+<td><button type = "button" onclick = "playAudioButton()">&#9654;</button></td>
+<td><button type = "button" onclick = "pauseAudio()">&#10073;&#10073;</button></td>
 </tr>
 </table>
 </div>
-<!--By default, hide the custom audio widget!-->
-<!--<script>-->
-<!--document.getElementById("manualwidget").style.visibility="hidden";-->
-<!--</script>-->
 
 
 </td></tr>
@@ -89,7 +94,7 @@
 </td>
 <td>
 
-
+<!--Parameter Choices!-->
 <table>
 <tr><td>Display Time Edges</td><td>
 <input type="checkbox" id="timeEdgesCheckbox" />
@@ -102,59 +107,18 @@
 </tr></table>
 
 <script>
-    var waitingDisp = document.getElementById("pagestatus");
     var source = null;
     var analyser = null;
     var context = new (window.AudioContext || window.webkitAudioContext)();
     var buffer = null;
-    var fileInput = document.getElementById('geomModelInput');
-    var result = document.getElementById('text');
-    
     var displayTimeEdges = true;
+    var waitingDisp = document.getElementById("pagestatus");
+    
 
     function disconnect() {
         source.stop();
         source.disconnect(0);
         analyser.disconnect(0);
-    }
-    
-    function parseText(fields) {
-        var varExplainedText = document.getElementById('varExplainedText');
-        var v = Math.round(1000*parseFloat(fields[0]));                
-        varExplainedText.innerHTML = "" + v/10 + "%";
-        var NCenters = parseInt(fields[1]);
-        var idx = 2;
-        var i = 0;
-        centers = [];
-        dims = [];
-        for (i = 0; i < NCenters; i++) {
-            centers.push(parseInt(fields[idx]));
-            idx++;
-            dims.push(parseInt(fields[idx]));
-            idx++;
-        }
-        var NEdges = parseInt(fields[idx]);
-        idx++;
-        edges = numeric.rep([NEdges, 2]);
-        var e1, e2;
-        for (i = 0; i < NEdges; i++) {
-            e1 = parseInt(fields[idx]);
-            idx++;
-            e2 = parseInt(fields[idx]);
-            idx++;
-            edges[i] = [e1, e2];
-        }
-        var N = parseInt(fields[idx]);
-        idx++;
-        var X = numeric.rep([N, 5]);
-        for (i = 0; i < N; i++) {
-            X[i][0] = parseFloat(fields[idx]);idx++;
-            X[i][1] = parseFloat(fields[idx]);idx++;
-            X[i][2] = parseFloat(fields[idx]);idx++;
-            X[i][3] = parseFloat(fields[idx]);idx++;
-            X[i][4] = parseInt(fields[idx]);idx++;
-        }
-        initGLBuffers(X);
     }
     
     function loadSong(fields, songfilename) {        
@@ -166,7 +130,6 @@
             buffer = buff;
             parseText(fields);      
             loading = false;
-            waitingDisp.innerHTML = "<h3><font color = \"#00ff00\">Ready</font></h3>";
             }, function(e) {
                 console.log(e);
             });
@@ -189,7 +152,6 @@
             return;
         }
         playing = true;
-        console.log("Playing audio, offsetTime = " + offsetTime);
         source = context.createBufferSource();
         source.buffer = buffer;
         analyser = context.createAnalyser();
@@ -207,7 +169,6 @@
     }
     
     function pauseAudio() {
-        console.log("Pausing");
         if (source === null) {
             return;
         }
@@ -216,22 +177,37 @@
         offsetTime = context.currentTime - startTime + offsetTime;
     }
     
+    //http://stackoverflow.com/questions/21797299/convert-base64-string-to-arraybuffer
+    function _base64ToArrayBuffer(base64) {
+        var binary_string =  window.atob(base64);
+        var len = binary_string.length;
+        var bytes = new Uint8Array( len );
+        for (var i = 0; i < len; i++)        {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+    
+    function decodeAudio(b64str) {
+        if(context.decodeAudioData) {
+            var arrayBuff = _base64ToArrayBuffer(b64str);
+            context.decodeAudioData(arrayBuff, function(buff) {
+            buffer = buff;
+            }, function(e) {
+                console.log(e);
+            });
+        } else {
+            buffer = context.createBuffer(data, false /*mixToMono*/);
+            alert("Error Decoding Audio");
+            playAudio();
+        }    
+    }
 
     var audioInput = document.getElementById('audioInput');
     audioInput.addEventListener('change', function(e) {
         var reader = new FileReader();
         reader.onload = function(e) {
-            var data = e.target.result;            
-            if(context.decodeAudioData) {
-                context.decodeAudioData(data, function(buff) {
-                buffer = buff;
-                }, function(e) {
-                    console.log(e);
-                });
-            } else {
-                buffer = context.createBuffer(data, false /*mixToMono*/);
-                playAudio();
-            }    
+            decodeAudio(e.target.result);
         }        
         reader.readAsArrayBuffer(audioInput.files[0]);
     });

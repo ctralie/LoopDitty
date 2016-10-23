@@ -77,9 +77,12 @@ function getSegmentsPCA(results) {
 			mean[k] += X[i][k];
 		}
 	}
+	for (var k = 0; k < 24; k++) {
+	    mean[k] /= NOut;
+	}
 	for (i = 0; i < NOut; i++) {
 		for (k = 0; k < 24; k++) {
-			X[i][k] -= mean[k]/NOut;
+			X[i][k] -= mean[k];
 		}
 	}
 	
@@ -374,4 +377,14 @@ function queryThePixies() {
 	querySoundCloudURL();
 }
 
+function queryKevinLyttle() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/usuario134/106-kevin-lyttle-turn-me-on";
+	querySoundCloudURL();
+}
 
+function queryPeterGabriel() {
+	var scurl = document.getElementById("scurl");
+	scurl.value = "https://soundcloud.com/neoneoptery/peter-gabriel-red-rain";
+	querySoundCloudURL();
+}

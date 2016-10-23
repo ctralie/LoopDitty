@@ -19,7 +19,7 @@
 <body onload="webGLStart();" text = "white" bgcolor = "black">
 
 <table width = "100%">
-<tr><td><center><h1>Loop Ditty Music Visualizer</h1><h2>By <a href = "http://www.ctralie.com">Chris Tralie</a></h2></center></td>
+<tr><td><center><h1>Loop Ditty Geometric Music Visualizer</h1><h2>By <a href = "http://www.ctralie.com">Chris Tralie</a></h2></center></td>
 <td>
 <table>
 <tr><td><a href = "http://echonest.com/"><img src = "echoNestLogo.png"></a></td></tr>
@@ -27,7 +27,11 @@
 </table>
 </td></tr>
 </table>
-<b>Paste SoundCloud URL Below</b> (any song on <a href = "http://www.soundcloud.com">http://www.soundcloud.com</a> should work!)
+
+<h2>NOTE: Web site is down, due to the dissolving of the <a href = "http://echonest.com/">EchoNest API</a>.  I will come up with something client side once I finish my <a href = "http://www.ctralie.com/Research">dissertation</a>.  For now, please enjoy a couple of <a href = "http://www.ctralie.com/Research/GeometricModels/">precomputed examples</a> </h2>
+
+<BR><BR><BR><HR>
+<b>Paste SoundCloud URL Below</b> (Nearly any song on <a href = "http://www.soundcloud.com">http://www.soundcloud.com</a> should work!  Though some randomly don't so try again if you get an error)
 <table><tr>
 <td><input id = "scurl" type = "text"></td>
 <td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
@@ -59,8 +63,10 @@
 <button type = "button" onclick = "queryBeeGees()">Bee Gees</button>
 <button type = "button" onclick = "queryThePixies()">The Pixies</button>
 <button type = "button" onclick = "queryTchaikovsky()">Tchaikovsky</button>
+<button type = "button" onclick = "queryPeterGabriel()">Peter Gabriel</button>
 <button type = "button" onclick = "queryBigSean()">Big Sean</button>
-<button type = "button" onclick = "queryWillSmith()">WillSmith</button>
+<button type = "button" onclick = "queryWillSmith()">Will Smith</button>
+<button type = "button" onclick = "queryKevinLyttle()">Kevin Lyttle</button>
 <button type = "button" onclick = "queryAlienAntFarm()">Alien Ant Farm</button>
 <button type = "button" onclick = "queryVanillaIce()">Vanilla Ice</button>
 </td>
@@ -101,8 +107,8 @@ SC.initialize({
 
 <BR><BR>
 
-<table width = "500"><tr><td>Copyright <a href = "http://www.ctralie.com">Chris Tralie</a> 10/2014<BR></td>
-<td align = "right">
+<table>
+<tr><td halign = "left">
 Visitors: 
 <!-- Start of StatCounter Code  -->
 <script type="text/javascript">
@@ -123,10 +129,14 @@ alt="shopify analytics"></a></div></noscript>
 <!-- End of StatCounter Code -->
 </td>
 </tr>
+
+<tr><td>Copyright <a href = "http://www.ctralie.com">Chris Tralie</a> 10/2014<BR></td></tr>
+
+<tr><td colspan = 2>Special thanks to <a href = "http://paulbendich.com/">Paul Bendich</a>, <a href = "http://cms.math.duke.edu/harer/">John Harer</a>, Marshall Ratliff, and Derrick Nowak for conceptual help and inspiration.  Work supported in part by NSF Research Training Grant "Structure in Complex Data," <b>NSF-DMS 1045133</b>, an NSF "Big Data" Grant <b>NSF 447491</b>, and an NSF Graduate Research Fellowship</td></tr>
 </table>
 
-
-
+<BR><BR>
+<b>Please share any interesting songs you find below (and what patterns you find interesting):</b>
 <div id="disqus_thread"></div>
 <script type="text/javascript">
     var disqus_shortname = 'loopditty';

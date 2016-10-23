@@ -265,7 +265,7 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-    mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, camR/100.0, camR*2, pMatrix);
+    mat4.perspective(45, 1.5, camR/100.0, camR*2, pMatrix);
 
     //mat4.identity(mvMatrix);
     var sinT = numeric.sin([theta])[0];
