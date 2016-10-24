@@ -1,0 +1,181 @@
+<!--Programmer: Chris Tralie!-->
+<!--Purpose: Front end curve drawer for the UI !-->
+<html>
+<head>
+<body>
+
+<h2>Curve Drawer</h2>
+
+<table>
+<tr>
+<td>
+<button type = "button" onclick = "savePoints()">Save Points</button><BR><BR><BR>
+<button type = "button" onclick = "doDraw()">Draw</button><BR><BR><BR>
+<button type = "button" onclick = "doPause()">Pause</button><BR><BR><BR>
+<button type = "button" onclick = "doErase()">Erase</button>
+</td>
+<td>
+<canvas id = "segcanvas" width = "1200" height = "600" style="border:1px solid #000000;">
+</canvas>
+</td>
+</tr>
+</table>
+
+<script>
+function getMousePos(canvas, evt) {
+	var rect = canvas.getBoundingClientRect();
+	return {
+	    X: evt.clientX - rect.left,
+	    Y: evt.clientY - rect.top
+	};
+}
+
+function getTouchPos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        X: evt.touches[0].clientX - rect.left,
+        Y: evt.touches[0].clientY - rect.top
+    };
+}
+
+var drawing = 0;
+var dragging = false;
+var posFunction = getMousePos;
+var canvas = document.getElementById('segcanvas');
+var ctx = canvas.getContext("2d"); //For drawing
+//Need this to disable that annoying menu that pops up on right click
+canvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); 
+
+var Ps = []; //Points on the triangle
+
+function doDraw() {
+    drawing = 1;
+    repaint();
+}
+function doPause() {
+    drawing = 0;
+    repaint();
+}
+function doErase() {
+    drawing = 2;
+    repaint();
+}
+
+function repaint() {
+    var dW = 1;
+    var dWSel = 10;
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    
+    //Draw points
+    ctx.fillStyle = "#000000";
+    for (var i = 0; i < Ps.length; i++) {
+        ctx.fillRect(Ps[i][0]-dW, Ps[i][1]-dW, dW*2+1, dW*2+1);
+    }
+}
+
+function selectPoint(evt) {
+    if (drawing == 0) {
+        return;
+    }
+    if (!dragging) {
+        return;
+    }
+    var mousePos = posFunction(canvas, evt);
+    var X = mousePos.X;
+    var Y = mousePos.Y;
+    evt.preventDefault();
+    if (drawing == 1) {
+        Ps.push([X, Y]);
+    }
+    else if (drawing == 2) {
+        //Remove point
+        if (Ps.length > 0) {
+            Ps.pop();
+        }
+    }
+    repaint();
+}
+
+function destroyClickedElement(event)
+{
+    document.body.removeChild(event.target);
+}
+
+//Function for exporting matrix to a text file for debugging
+function savePoints()
+{
+    var textToSave = "var POINTS = [";
+    for (var i = 0; i < Ps.length; i++) {
+        textToSave += "[";
+        textToSave += Math.floor(Ps[i][0]) + ",";
+        textToSave += Math.floor(canvas.height - Ps[i][1]) + ",0,";
+        textToSave += ("" + i);
+        textToSave += "]";
+        if (i < Ps.length - 1) {
+            textToSave += ",";
+        }
+    }
+    textToSave += "]";
+    var textToSaveAsBlob = new Blob([textToSave], {type:"text/plain"});
+    var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+ 
+    var downloadLink = document.createElement("a");
+    downloadLink.download = "points.txt";
+    downloadLink.innerHTML = "Download File";
+    downloadLink.href = textToSaveAsURL;
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+ 
+    downloadLink.click();
+    repaint();
+}
+
+releaseClick = function(evt) {
+    posFunction = getMousePos;
+	evt.preventDefault();
+	dragging = false;
+	repaint();
+	return false;
+} 
+
+makeClick = function(evt) {
+    posFunction = getMousePos;
+	evt.preventDefault();
+	dragging = true;
+	repaint();
+	return false;
+}
+
+releaseTouch = function(evt) {
+    posFunction = getTouchPos;
+	evt.preventDefault();
+	dragging = false;
+	repaint();
+	return false;
+} 
+
+makeTouch = function(evt) {
+    posFunction = getTouchPos;
+	evt.preventDefault();
+	dragging = true;
+	repaint();
+	return false;
+}
+
+canvas.addEventListener('mousedown', makeClick);
+canvas.addEventListener('mouseup', releaseClick);
+canvas.addEventListener('mousemove', selectPoint);
+
+canvas.addEventListener('touchstart', makeTouch);
+canvas.addEventListener('touchend', releaseTouch);
+canvas.addEventListener('touchmove', selectPoint);
+repaint();
+
+</script>
+
+
+</body>
+</html>

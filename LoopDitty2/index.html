@@ -8,6 +8,7 @@
 <script type="text/javascript" src="libs/gl-matrix-min.js"></script>
 <script type="text/javascript" src="libs/webgl-utils.js"></script>
 <script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
+<script type="text/javascript" src="libs/interact.min.js"></script>
 
 <!--D3 stuff!-->
 <script src="libs/d3-collection.v0.1.min.js"></script>
@@ -18,6 +19,8 @@
 
 <!--My Scripts!-->
 <script src="Cameras3D.js"></script>
+<script src="DefaultCurves.js"></script>
+<script src="Colormaps.js"></script>
 <script src="LoopDittyGL.js"></script>
 <script src="MusicFeatures.js"></script>
 <script src="MatrixUtilities.js"></script>
@@ -113,22 +116,23 @@ button:hover {
     var buffer = null;
     var displayTimeEdges = true;
     var waitingDisp = document.getElementById("pagestatus");
-    
+
 
     function disconnect() {
         source.stop();
         source.disconnect(0);
         analyser.disconnect(0);
     }
-    
-    function loadSong(fields, songfilename) {        
+
+    //TODO: Change this for some precomputed examples
+    function loadSong(fields, songfilename) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', songfilename, true);
         xhr.responseType = 'arraybuffer';
         xhr.onload = function(err) {
             context.decodeAudioData(this.response, function(buff) {
             buffer = buff;
-            parseText(fields);      
+            parseText(fields);
             loading = false;
             }, function(e) {
                 console.log(e);
@@ -146,7 +150,7 @@ button:hover {
             playAudio();
         }
     }
-    
+
     function playAudio() {
         if (context === null) {
             return;
@@ -161,13 +165,13 @@ button:hover {
         startTime = context.currentTime;
 
         //setTimeout(disconnect, source.buffer.duration * 1000 +1000);
-        
+
         source.start(context.currentTime, offsetTime, buffer.duration - offsetTime);
-        
+
         playIdx = 0;
         requestAnimFrame(function(){repaintWithContext(context)});
     }
-    
+
     function pauseAudio() {
         if (source === null) {
             return;
@@ -176,43 +180,37 @@ button:hover {
         source.stop();
         offsetTime = context.currentTime - startTime + offsetTime;
     }
-    
-    //http://stackoverflow.com/questions/21797299/convert-base64-string-to-arraybuffer
-    function _base64ToArrayBuffer(base64) {
-        var binary_string =  window.atob(base64);
-        var len = binary_string.length;
-        var bytes = new Uint8Array( len );
-        for (var i = 0; i < len; i++)        {
-            bytes[i] = binary_string.charCodeAt(i);
-        }
-        return bytes.buffer;
-    }
-    
-    function decodeAudio(b64str) {
+
+    function decodeAudio(arrayBuff) {
         if(context.decodeAudioData) {
-            var arrayBuff = _base64ToArrayBuffer(b64str);
             context.decodeAudioData(arrayBuff, function(buff) {
             buffer = buff;
             }, function(e) {
                 console.log(e);
+                alert("Error Decoding Audio");
             });
         } else {
             buffer = context.createBuffer(data, false /*mixToMono*/);
             alert("Error Decoding Audio");
             playAudio();
-        }    
+        }
     }
 
+    //Loading in a custom song
     var audioInput = document.getElementById('audioInput');
     audioInput.addEventListener('change', function(e) {
+        pauseAudio();
         var reader = new FileReader();
-        reader.onload = function(e) {
-            decodeAudio(e.target.result);
-        }        
+        var songfilename = 'temp.mp3';
+        reader.onload = function(event) {
+            //decodeAudio(event.target.result);
+            queryCustomFeatures(event.target.result, songfilename);
+        }
+        songfilename = audioInput.files[0].name;
         reader.readAsArrayBuffer(audioInput.files[0]);
     });
 
-    
+
     var timeSlider = document.getElementById('timeSlider');
     timeSlider.addEventListener('change', function(e) {
         if (buffer === null) {
@@ -226,7 +224,7 @@ button:hover {
             playAudio();
         }
     });
-    
+
     var timeEdgesCheckbox = document.getElementById('timeEdgesCheckbox');
     timeEdgesCheckbox.addEventListener('change', function(e) {
         displayTimeEdges = timeEdgesCheckbox.checked;
