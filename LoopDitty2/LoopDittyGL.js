@@ -233,7 +233,7 @@ touchDragged = function(evt) {
 }
 
 touchGesture = function(evt) {
-    waitingDisp.innerHTML = "<font color = \"red\">" + evt.toString() + "</font>";
+    //waitingDisp.innerHTML = "<font color = \"red\">" + evt.toString() + "</font>";
     lastX = evt.pageX;
     lastY = evt.pageY;
     //camera.orbitLeftRight(2*evt.da);

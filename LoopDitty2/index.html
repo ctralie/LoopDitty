@@ -201,13 +201,11 @@ button:hover {
     audioInput.addEventListener('change', function(e) {
         pauseAudio();
         var reader = new FileReader();
-        var songfilename = 'temp.mp3';
         reader.onload = function(event) {
-            //decodeAudio(event.target.result);
-            queryCustomFeatures(event.target.result, songfilename);
+            decodeAudio(event.target.result);
         }
-        songfilename = audioInput.files[0].name;
         reader.readAsArrayBuffer(audioInput.files[0]);
+        queryCustomFeatures(audioInput.files[0]);
     });
 
 

@@ -1,7 +1,7 @@
 //Purpose: Code for dealing with SoundCloud and processing features
 
-SERVER_URL = 'http://loopditty.herokuapp.com/';
-//SERVER_URL = 'http://127.0.0.1:5000';
+//SERVER_URL = 'http://loopditty.herokuapp.com/';
+SERVER_URL = 'http://127.0.0.1:5000';
 
 //A function to show a progress bar
 var loading = false;
@@ -102,7 +102,7 @@ function processSoundcloudResults(res) {
     loadColor = "yellow";
     var worker = new Worker("DelaySeries.js");
     worker.postMessage({MusicParams:MusicParams, musicFeatures:musicFeatures});
-    
+
     worker.onmessage = function(event) {
         if (event.data.type == "newTask") {
             loadString = event.data.taskString;
@@ -135,7 +135,7 @@ function processCustomAudio(res) {
     loadColor = "yellow";
     var worker = new Worker("DelaySeries.js");
     worker.postMessage({MusicParams:MusicParams, musicFeatures:musicFeatures});
-    
+
     worker.onmessage = function(event) {
         if (event.data.type == "newTask") {
             loadString = event.data.taskString;
@@ -178,26 +178,29 @@ function querySoundCloudURL() {
 }
 
 
-function queryCustomFeatures(arrayBuff, filename) {
+function queryCustomFeatures(file) {
     pauseAudio();
     var pagestatus = document.getElementById("pagestatus");
     loadString = "Sending data to server for processing (this may take a moment)";
     loadColor = "red";
     loading = true;
     changeLoad();
-    var mp3data = ArrayBufferTobase64(arrayBuff);
-    $.ajax({
-      url: SERVER_URL,
-      type: 'POST',
-      data: {mp3data:mp3data, filename:filename},
-      dataType: 'json',
-      success: processCustomAudio,
-      error: function (xhr, ajaxOptions, thrownError) {
-        alert("Error Loading Song");
-        console.log(xhr.status);
-        console.log(thrownError);
-        setLoadingFailed();
-      },
-      beforeSend: setHeader
-    });
+
+    //TODO: Add file here
+    var formData = new FormData();
+    formData.append('file', file, file.name);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SERVER_URL, true);
+    xhr.onload = function (results) {
+        if (xhr.status == 200) {
+            processCustomAudio(JSON.parse(results.target.response));
+        }
+        else {
+            alert("Error Loading Song");
+            console.log(xhr.status);
+            console.log(thrownError);
+            setLoadingFailed();
+        }
+    };
+    xhr.send(formData);
 }
