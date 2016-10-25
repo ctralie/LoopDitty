@@ -122,6 +122,36 @@ input[type=submit] {
 
 .show {display:block;}
 
+
+/* Tooltip container */
+//http://www.w3schools.com/css/css_tooltip.asp
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 400px;
+    background-color: black;
+    color: #fff;
+    text-align: left;
+    padding: 10px;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+
 #title {
     margin: 0;
     font-size: 3em;
@@ -177,9 +207,10 @@ input[type=submit] {
 
 
 <table>
-<tr><td colspan = "2"><div id = "acknowledgements">Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401.
-<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a>
-    and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for inspiration
+<tr><td colspan = "2"><div id = "acknowledgements">Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401
+<BR>and an NSF Research Training Grant NSF-DMS 1045133.
+<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a> for inspiration<BR>
+    and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for motivation
 </div>
 </td></tr>
 <tr><td colspan = "2"><div id = "directionbig">Paste SoundCloud URL Below To Begin</div></td></tr>
@@ -259,55 +290,107 @@ input[type=submit] {
 <table>
 <tr>
 <td colspan = "2">
-<div id = "paramtitle">Display Parameters</div>
+    <div class="tooltip"><div id = "paramtitle">Display Parameters</div>
+        <span class="tooltiptext">These are aesthetic animation parameters which can be updated quickly without any long re-computation</span>
+    </div>
+
 </td>
 </tr>
 <tr>
-<td><div id = "paramchoice">Display Time Edges</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Display Time Edges
+        <span class="tooltiptext">Choose whether or not line segments should be drawn between points which are adjacent in time in the song.</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="timeEdgesCheckbox" /></td>
 </tr>
-<tr><td colspan = "2"><div id = "paramtitle">Feature Choices</div></td></tr>
+<tr><td colspan = "2">
+        <div class="tooltip"><div id = "paramtitle">Feature Choices</div>
+            <span class="tooltiptext">Each point in this animation is a 3 dimensional projection of a bunch of numbers which describe perceptual aspects of a chunk of music.  As the sound changes, these numbers also change, and so the points move through space.  You can choose to include or exclude certain numbers from contributing to the position of the points by checking and unchecking the boxes below</span>
+        </div>
+    </div></td></tr>
 
 <tr>
-<td><div id = "paramchoice">MFCCs</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">MFCC
+        <span class="tooltiptext">MFCC stands for "<a href = "https://en.wikipedia.org/wiki/Mel-frequency_cepstrum">Mel-Frequency Cepstral Coefficient</a>." These 12 numbers model a highly smoothed version of the frequency spectrum of a chunk of audio.  They have been shown to work well for voice, musical artist, and musical instrument modeling.  They can be thought of as picking up on the "timbre" of the sound; or the stuff that isn't the notes.  By themselves, they should be able to separate the song into distinct regions.</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="MFCCCheckbox" /></td>
 </tr>
 
 <tr>
-<td><div id = "paramchoice">Chroma</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Chroma
+        <span class="tooltiptext">Chroma is a 12-dimension feature set used to model the strength of the 12 notes in the <a href = "https://en.wikipedia.org/wiki/Chromatic_scale">Western chromatic scale</a>, factoring out the octave that they're in (so a 440hz and an 880hz A are equivalient, for example).  This is complementary to MFCC, since it models note pitches only, attempting to factor out information about timbre.</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="ChromaCheckbox" /></td>
 </tr>
 
 <tr>
-<td><div id = "paramchoice">Spectral Centroid</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Spectral Centroid
+        <span class="tooltiptext">The spectral centroid is a single number which is the average frequency in a chunk of audio.  This number is higher with higher musical notes, high frequency vibrations from percussive instruments, and consonant vocal sounds.  Conversely, it is lower for bass instruments, lower notes, and vowel sounds.</span>
+    </div>
+
+</div></td><td>
 <input type="checkbox" id="CentroidCheckbox" /></td>
 </tr>
 
 <tr>
-<td><div id = "paramchoice">Spectral Roloff</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Spectral Roloff
+        <span class="tooltiptext">The spectral roloff is the frequency below which 85% of the spectral power is contained.  Songs with more bass will have a lower spectral roloff, while electronic music with lots of high frequency energy will have a higher spectral roloff.</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="RoloffCheckbox" /></td>
 </tr>
 
 <tr>
-<td><div id = "paramchoice">Spectral Flux</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Spectral Flux
+        <span class="tooltiptext">The spectral flux is the average difference in power between each frequency index between two adjacent chunks of audio.  It is like a "frequency derivative."  In highly percussive music, high values of this feature correlate strongly with drum hits, so if you use this feature by itself, you're likely to see a curve that "waves with the beat."</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="FluxCheckbox" /></td>
 </tr>
 
 <tr>
-<td><div id = "paramchoice">Zero Crossings</div></td><td>
+<td><div id = "paramchoice">
+    <div class="tooltip">Zero Crossings
+        <span class="tooltiptext">This is a simple but surprisingly descriptive feature that counts the number of times the audio waveform goes up and down through the zero line.  It will be higher for higher frequencies</span>
+    </div>
+</div></td><td>
 <input type="checkbox" id="ZeroCrossingsCheckbox" /></td>
 </tr>
 
-<tr><td colspan = "2"><div id = "paramtitle">Window Options</div></td></tr>
+<tr><td colspan = "2">
+    <div class="tooltip"><div id = "paramtitle">Window Options</div>
+        <span class="tooltiptext">Features from chunks of the audio are summarized within a "sliding window" of audio.  By default, the program takes the average value of features within each window, but it is also possible to report the variation of the features within the window. </span>
+    </div>
+</div></td></tr>
 
 <tr>
-    <td><div id = "paramchoice">Window Length</div></td>
+    <td><div id = "paramchoice">
+        <div class="tooltip">Window Length
+            <span class="tooltiptext">This is the length in seconds of the window that is used to summarize the features taken in chunks of audio.  Features are computed in 23 millisecond chunks, so the default value of 3.5 seconds corresponds to averaging roughly 150 windows.  The longer the window is, the more sound is summarized by the window, which means the points in the animation are likely to be more distinct.</span>
+        </div>
+    </div></td>
     <td><input id = "windowLength" type = "text" value = "3.5" size = "1"></td>
 </tr>
 
-<tr><td><div id = "paramchoice">Sphere Normalize</div></td>
+<tr><td><div id = "paramchoice">
+    <div class="tooltip">Sphere Normalize
+        <span class="tooltiptext">For certain sections of audio that are quieter or very distinct from others, it may be the case that the animation spreads out with long tails.  Sphere normalization makes the magnitude of each feature point in the high dimensional space to be the same before the projection.  In plain English, it tries to distribute the points out more evenly.</span>
+    </div>
+</div></td>
 <td><input type="checkbox" id="SphereNormalizeCheckbox" /></td></td></tr>
-<tr><td><div id = "paramchoice">Use Variation</div></td>
+<tr><td><div id = "paramchoice">
+    <div class="tooltip">Use Variation
+        <span class="tooltiptext">In addition to reporting the mean of all of the features in a window, it is also possible to tack on more numbers that report how volatile each feature is in the window.  This is similar to the variance or standard deviation of features.  Computation will take slightly longer, but you may get more distinct points in your animation.</span>
+    </div>
+</div></td>
 <td><input type="checkbox" id="UseVariationCheckbox" /></td></td></tr>
 <tr><td colspan = "2"><BR><BR><button type = "button" id = "recompute" onclick = "updateParams()">Recompute Embedding</button></td></tr>
 
@@ -514,7 +597,7 @@ input[type=submit] {
     windowLengthText.value = "" + MusicParams.TimeWin;
     windowLengthText.addEventListener('input', function() {
         MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";        
+        recomputeButton.style.backgroundColor = "red";
     })
 
     function dropdownHandler() {
@@ -522,6 +605,8 @@ input[type=submit] {
     }
 
 </script>
+
+
 
 </body>
 </html>
