@@ -1,6 +1,8 @@
 <html>
 
 <head>
+<meta charset=utf-8 />
+<title>Loop Ditty Geometric Music Visualizer</title>
 <!--External Libraries!-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <!--<script src="http://connect.soundcloud.com/sdk.js"></script>-->
@@ -67,32 +69,7 @@ a:visited {
 color: #8dae4e;
 }
 
-#title {
-    margin: 0;
-    font-size: 3em;
-    text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.4);
-    font-family: 'Poiret One', cursive;
-    margin-bottom: 10;
-}
-
-#subtitle {
-    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
-    font-size: 1.5em;
-    margin-bottom: 30;
-}
-
-#directionbig {
-    font-family: "Droid Sans", "DejaVu Sans", "Arial", sans-serif;
-    font-weight: bold;
-    font-size: 22px;
-}
-
-#grayband {
-    color:#101010;
-}
-
 input[type=text] {
-    width: 600px;
     background-color: #202020;
     color: #8dae4e;
     padding:8;
@@ -106,7 +83,6 @@ input[type=submit] {
     -webkit-border-radius: 5px;
     border-radius: 5px;
 }
-
 
 .dropbtn {
     background-color: #bfbfbf;
@@ -146,6 +122,51 @@ input[type=submit] {
 
 .show {display:block;}
 
+#title {
+    margin: 0;
+    font-size: 3em;
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.4);
+    font-family: 'Poiret One', cursive;
+    margin-bottom: 10;
+}
+
+#subtitle {
+    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
+    font-size: 1.5em;
+    margin-bottom: 30;
+}
+
+#paramtitle {
+    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
+    font-size: 1.5em;
+    margin-top: 30;
+    margin-bottom: 10;
+}
+
+#paramchoice {
+    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
+    margin-top: 5;
+    margin-bottom: 5;
+}
+
+#acknowledgements {
+    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
+    font-size: 1em;
+    margin-bottom: 30;
+}
+
+#directionbig {
+    font-family: "Droid Sans", "DejaVu Sans", "Arial", sans-serif;
+    font-weight: bold;
+    font-size: 22px;
+}
+
+#grayband {
+    color:#101010;
+}
+
+
+
 </style>
 </head>
 
@@ -153,11 +174,16 @@ input[type=submit] {
 
 <div id = "title">Loop Ditty Geometric Music Visualizer</div>
 <div id = "subtitle"> by <a href = "http://www.ctralie.com">Chris Tralie</a></div>
-Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401.
-<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a> and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for inspiration
-<BR><BR><BR>
-<div id = "directionbig">Paste SoundCloud URL Below To Begin</div>
-<table><tr>
+
+
+<table>
+<tr><td colspan = "2"><div id = "acknowledgements">Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401.
+<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a>
+    and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for inspiration
+</div>
+</td></tr>
+<tr><td colspan = "2"><div id = "directionbig">Paste SoundCloud URL Below To Begin</div></td></tr>
+<tr>
 <td><input id = "scurl" type = "text" size = "50"></td>
 <td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
 </tr>
@@ -199,7 +225,7 @@ Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a>
 <table>
 <tr><td><HR></td><td></td></tr>
 <tr>
-<td width = 800 bgcolor = "#181818">
+<td width = 800>
 <div id = "pagestatus"><h3><font color = "red">Waiting for Input...</font></h3></div>
 </td>
 </tr>
@@ -231,10 +257,60 @@ Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a>
 
 <!--Parameter Choices!-->
 <table>
-<tr><td>Display Time Edges</td><td>
-<input type="checkbox" id="timeEdgesCheckbox" />
+<tr>
+<td colspan = "2">
+<div id = "paramtitle">Display Parameters</div>
 </td>
 </tr>
+<tr>
+<td><div id = "paramchoice">Display Time Edges</div></td><td>
+<input type="checkbox" id="timeEdgesCheckbox" /></td>
+</tr>
+<tr><td colspan = "2"><div id = "paramtitle">Feature Choices</div></td></tr>
+
+<tr>
+<td><div id = "paramchoice">MFCCs</div></td><td>
+<input type="checkbox" id="MFCCCheckbox" /></td>
+</tr>
+
+<tr>
+<td><div id = "paramchoice">Chroma</div></td><td>
+<input type="checkbox" id="ChromaCheckbox" /></td>
+</tr>
+
+<tr>
+<td><div id = "paramchoice">Spectral Centroid</div></td><td>
+<input type="checkbox" id="CentroidCheckbox" /></td>
+</tr>
+
+<tr>
+<td><div id = "paramchoice">Spectral Roloff</div></td><td>
+<input type="checkbox" id="RoloffCheckbox" /></td>
+</tr>
+
+<tr>
+<td><div id = "paramchoice">Spectral Flux</div></td><td>
+<input type="checkbox" id="FluxCheckbox" /></td>
+</tr>
+
+<tr>
+<td><div id = "paramchoice">Zero Crossings</div></td><td>
+<input type="checkbox" id="ZeroCrossingsCheckbox" /></td>
+</tr>
+
+<tr><td colspan = "2"><div id = "paramtitle">Window Options</div></td></tr>
+
+<tr>
+    <td><div id = "paramchoice">Window Length</div></td>
+    <td><input id = "windowLength" type = "text" value = "3.5" size = "1"></td>
+</tr>
+
+<tr><td><div id = "paramchoice">Sphere Normalize</div></td>
+<td><input type="checkbox" id="SphereNormalizeCheckbox" /></td></td></tr>
+<tr><td><div id = "paramchoice">Use Variation</div></td>
+<td><input type="checkbox" id="UseVariationCheckbox" /></td></td></tr>
+<tr><td colspan = "2"><BR><BR><button type = "button" id = "recompute" onclick = "updateParams()">Recompute Embedding</button></td></tr>
+
 </table>
 
 
@@ -246,7 +322,6 @@ Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a>
     var analyser = null;
     var context = new (window.AudioContext || window.webkitAudioContext)();
     var buffer = null;
-    var displayTimeEdges = true;
     var waitingDisp = document.getElementById("pagestatus");
 
 
@@ -328,10 +403,6 @@ Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a>
         }
     }
 
-    function dropdownHandler() {
-        document.getElementById("precomputedExamples").classList.toggle("show");
-    }
-
     //Loading in a custom song
     var audioInput = document.getElementById('audioInput');
     audioInput.addEventListener('change', function(e) {
@@ -361,13 +432,96 @@ Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a>
 
     var timeEdgesCheckbox = document.getElementById('timeEdgesCheckbox');
     timeEdgesCheckbox.addEventListener('change', function(e) {
-        displayTimeEdges = timeEdgesCheckbox.checked;
+        MusicParams.displayTimeEdges = timeEdgesCheckbox.checked;
         requestAnimFrame(function(){repaintWithContext(context)});
     });
     timeEdgesCheckbox.checked = true;
 
-</script>
+    var recomputeButton = document.getElementById("recompute");
+    var MFCCCheckbox = document.getElementById('MFCCCheckbox');
+    MFCCCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingMFCC = MFCCCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    MFCCCheckbox.checked = true;
 
+    var ChromaCheckbox = document.getElementById('ChromaCheckbox');
+    ChromaCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingChroma = ChromaCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    ChromaCheckbox.checked = true;
+
+    var CentroidCheckbox = document.getElementById('CentroidCheckbox');
+    CentroidCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingCentroid = CentroidCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    CentroidCheckbox.checked = true;
+
+    var RoloffCheckbox = document.getElementById('RoloffCheckbox');
+    RoloffCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingRoloff = RoloffCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    RoloffCheckbox.checked = true;
+
+    var FluxCheckbox = document.getElementById('FluxCheckbox');
+    FluxCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingFlux = FluxCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    FluxCheckbox.checked = true;
+
+    var ZeroCrossingsCheckbox = document.getElementById('ZeroCrossingsCheckbox');
+    ZeroCrossingsCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingZeroCrossings = ZeroCrossingsCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    ZeroCrossingsCheckbox.checked = true;
+
+    var SphereNormalizeCheckbox = document.getElementById('SphereNormalizeCheckbox');
+    SphereNormalizeCheckbox.addEventListener('change', function(e) {
+        MusicParams.sphereNormalize = SphereNormalizeCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    SphereNormalizeCheckbox.checked = false;
+
+    var UseVariationCheckbox = document.getElementById('UseVariationCheckbox');
+    UseVariationCheckbox.addEventListener('change', function(e) {
+        MusicParams.usingDerivatives = UseVariationCheckbox.checked;
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";
+        requestAnimFrame(function(){repaintWithContext(context)});
+    });
+    UseVariationCheckbox.checked = false;
+
+    var windowLengthText = document.getElementById('windowLength');
+    windowLengthText.value = "" + MusicParams.TimeWin;
+    windowLengthText.addEventListener('input', function() {
+        MusicParams.needsUpdate = true;
+        recomputeButton.style.backgroundColor = "red";        
+    })
+
+    function dropdownHandler() {
+        document.getElementById("precomputedExamples").classList.toggle("show");
+    }
+
+</script>
 
 </body>
 </html>

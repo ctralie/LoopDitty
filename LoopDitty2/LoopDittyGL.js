@@ -413,7 +413,7 @@ function drawScene() {
         gl.vertexAttribPointer(shaderProgram.vColorAttrib, allColorVBO.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.POINTS, 0, playIdx);
         //Draw Lines between points if the user so chooses
-        if (displayTimeEdges) {
+        if (MusicParams.displayTimeEdges) {
             gl.drawArrays(gl.LINES, 0, playIdx+1);
             gl.drawArrays(gl.LINES, 1, playIdx);
         }
@@ -472,7 +472,7 @@ function webGLStart() {
     dims = [1];
     initGLBuffers(WELCOME_CURVE);
 
-    gl.clearColor(0.125, 0.125, 0.125, 1.0);
+    gl.clearColor(0, 0, 0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     requestAnimFrame(repaint);

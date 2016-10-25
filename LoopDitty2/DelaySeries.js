@@ -13,7 +13,7 @@ onmessage = function(event) {
     if (NIn == 0) {
         return;
     }
-    
+
     //First figure out how many dimensions there are
     var dim = 0;
     if (MusicParams.usingMFCC) {
@@ -31,7 +31,7 @@ onmessage = function(event) {
     if (MusicParams.usingZeroCrossings) {
         dim++;
     }
-    
+
     //Pre-allocate space for input and output arrays
     postMessage({type:"newTask", taskString:"Copying Fields / Computing Derivatives"});
     var NDim = dim;
@@ -71,7 +71,7 @@ onmessage = function(event) {
             j++;
         }
     }
-    
+
     //Step 2: Compute magnitude discrete derivatives along each dimension
     //and put them in the second half of the dimensions (cumulative sum
     //of these is like total variation)
@@ -85,8 +85,8 @@ onmessage = function(event) {
         //(raw feature and derivative)
     }
 
-    
-    //Step 3: Loop through and take the average of the normal and 
+
+    //Step 3: Loop through and take the average of the normal and
     //derivative features in the window
     postMessage({type:"newTask", taskString:"Computing block means"});
     //Allocate output variables
@@ -107,7 +107,7 @@ onmessage = function(event) {
     for (k = 0; k < dim; k++) {
         X[0][k] = cumsum[k] / Win;
     }
-    
+
     //Compute the rest of the means
     for (i = 1; i < NOut; i++) {
         tout[i] = hopSizeSec*i;
@@ -119,7 +119,7 @@ onmessage = function(event) {
             X[i][k] = cumsum[k] / Win;
         }
     }
-    
+
     //Step 4: Compute and subtract off mean of each dimension
     postMessage({type:"newTask", taskString:"Normalizing"});
     var mean = numeric.rep([dim], 0);
@@ -136,7 +136,7 @@ onmessage = function(event) {
             X[i][k] -= mean[k];
         }
     }
-    
+
     //Step 5: Compute standard deviation and scale every component
     var std = numeric.rep([dim], 0);
     for (i = 0; i < NOut; i++) {
@@ -155,18 +155,30 @@ onmessage = function(event) {
             X[i][k] /= std[k];
         }
     }
-    
+
     //Step 5.5: If the user so chooses, do sphere normalization
-    //TODO: Finish this
-    
+    if (MusicParams.sphereNormalize) {
+        var Norm = 0.0;
+        for (i = 0; i < NOut; i++) {
+            Norm = 0.0;
+            for (k = 0; k < dim; k++) {
+                Norm += X[i][k]*X[i][k];
+            }
+            Norm = Math.sqrt(Norm);
+            for (k = 0; k < dim; k++) {
+                X[i][k] /= Norm;
+            }
+        }
+    }
+
     //Step 6: Do PCA
     postMessage({type:"newTask", taskString:"Computing PCA"});
     //NOTE: It's possible to have 3 or fewer features based on user
     //choices, in which case PCA can be skipped
-    if (dim > 3) { 
+    if (dim > 3) {
         X = doPCA(X, 3, 100);
     }
-    
+
     //Step 7: Store the first 3 principal components, and make the 4th
     //component the time of occurrence
     Y = numeric.rep([NOut, 4], 0);
@@ -176,37 +188,39 @@ onmessage = function(event) {
         }
         Y[i][3] = tout[i];
     }
-    
-    //Step 8: Subtract off mean and scale by standard deviation of each 
+
+    //Step 8: Subtract off mean and scale by standard deviation of each
     //component in the projected space
-    var mean = numeric.rep([3], 0);
-    for (i = 0; i < NOut; i++) {
+    if (!MusicParams.SphereNormalize) {
+        var mean = numeric.rep([3], 0);
+        for (i = 0; i < NOut; i++) {
+            for (k = 0; k < 3; k++) {
+                mean[k] += Y[i][k];
+            }
+        }
+        for (i = 0; i < NOut; i++) {
+            for (k = 0; k < 3; k++) {
+                Y[i][k] -= mean[k]/NOut;
+            }
+        }
+        var std = numeric.rep([3], 0);
+        for (i = 0; i < NOut; i++) {
+            for (k = 0; k < 3; k++) {
+                std[k] += (Y[i][k]-mean[k])*(Y[i][k]-mean[k]);
+            }
+        }
         for (k = 0; k < 3; k++) {
-            mean[k] += Y[i][k];
+            std[k] = Math.sqrt(std[k]/(NOut-1));
+            if (std[k] == 0) {
+                std[k] = 1;
+            }
+        }
+        for (i = 0; i < NOut; i++) {
+            for (k = 0; k < 3; k++) {
+                Y[i][k] /= std[k];
+            }
         }
     }
-    for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 3; k++) {
-            Y[i][k] -= mean[k]/NOut;
-        }
-    }
-    var std = numeric.rep([3], 0);
-    for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 3; k++) {
-            std[k] += (Y[i][k]-mean[k])*(Y[i][k]-mean[k]);
-        }
-    }
-    for (k = 0; k < 3; k++) {
-        std[k] = Math.sqrt(std[k]/(NOut-1));
-        if (std[k] == 0) {
-            std[k] = 1;
-        }
-    }
-    for (i = 0; i < NOut; i++) {
-        for (k = 0; k < 3; k++) {
-            Y[i][k] /= std[k];
-        }
-    }
-    
+
     postMessage({type:"end", Y:Y});
 }

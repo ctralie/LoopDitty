@@ -1,7 +1,7 @@
 //Purpose: Code for dealing with SoundCloud and processing features
 
-SERVER_URL = 'http://loopditty.herokuapp.com/';
-//SERVER_URL = 'http://127.0.0.1:5000';
+//SERVER_URL = 'http://loopditty.herokuapp.com/';
+SERVER_URL = 'http://127.0.0.1:5000';
 
 //A function to show a progress bar
 var loading = false;
@@ -55,8 +55,8 @@ function ArrayBufferTobase64(arrayBuff) {
 }
 
 //Parameters for doing PCA on music
-var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false};
-var musicFeatures = null;
+var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false};
+var musicFeatures = {};
 
 function checkForFeatureFields(res) {
     var allFields = true;
@@ -79,6 +79,44 @@ function checkForFeatureFields(res) {
         allFields = false;
     }
     return allFields;
+}
+
+function updateParams() {
+    if (!MusicParams.needsUpdate) {
+        alert('Nothing has changed, so no need to recompute');
+        return;
+    }
+    if (!checkForFeatureFields(musicFeatures)) {
+        alert('Must load in song before parameters can be tweaked');
+        return;
+    }
+    pauseAudio();
+    var TimeWin = parseFloat(windowLengthText.value);
+    TimeWin = Math.max(TimeWin, 0.1);
+    TimeWin = Math.min(TimeWin, 100);
+    windowLengthText.value = "" + TimeWin;
+    MusicParams.TimeWin = TimeWin;
+    //Load a web worker in the background that makes the
+    //delay series and does PCA
+    loadColor = "yellow";
+    loading = true;
+    changeLoad();
+    var worker = new Worker("DelaySeries.js");
+    worker.postMessage({MusicParams:MusicParams, musicFeatures:musicFeatures});
+
+    worker.onmessage = function(event) {
+        if (event.data.type == "newTask") {
+            loadString = event.data.taskString;
+        }
+        else if (event.data.type == "end") {
+            initGLBuffers(event.data.Y);
+            var timeSlider = document.getElementById('timeSlider');
+            timeSlider.value = 0;
+            recomputeButton.style.backgroundColor = "#bfbfbf";
+            MusicParams.needsUpdate = false;
+            changeToReady();
+        }
+    }
 }
 
 function processSoundcloudResults(res) {
@@ -111,8 +149,9 @@ function processSoundcloudResults(res) {
             initGLBuffers(event.data.Y);
             var arrayBuff = base64ToArrayBuffer(musicFeatures.mp3data);
             decodeAudio(arrayBuff);
-            var timeSlider = document.getElementById('timeSlider');
             timeSlider.value = 0;
+            recomputeButton.style.backgroundColor = "#bfbfbf";
+            MusicParams.needsUpdate = false;
             changeToReady();
         }
     }
@@ -142,8 +181,9 @@ function processCustomAudio(res) {
         }
         else if (event.data.type == "end") {
             initGLBuffers(event.data.Y);
-            var timeSlider = document.getElementById('timeSlider');
             timeSlider.value = 0;
+            recomputeButton.style.backgroundColor = "#bfbfbf";
+            MusicParams.needsUpdate = false;
             changeToReady();
         }
     }
