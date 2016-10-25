@@ -1,7 +1,7 @@
 //Purpose: Code for dealing with SoundCloud and processing features
 
-//SERVER_URL = 'http://loopditty.herokuapp.com/';
-SERVER_URL = 'http://127.0.0.1:5000';
+SERVER_URL = 'http://loopditty.herokuapp.com/';
+//SERVER_URL = 'http://127.0.0.1:5000';
 
 //A function to show a progress bar
 var loading = false;

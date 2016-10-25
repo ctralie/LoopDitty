@@ -24,7 +24,7 @@
 <script src="LoopDittyGL.js"></script>
 <script src="MusicFeatures.js"></script>
 <script src="MatrixUtilities.js"></script>
-</head>
+
 
 <style>
 button {
@@ -42,6 +42,11 @@ button {
   border-radius: 10px;
 }
 
+body {
+    background-color: #202020;
+    color:#CCCCCC;
+}
+
 #sourceorder {
   font-size: 22px;
 }
@@ -49,25 +54,152 @@ button {
 button:hover {
   opacity: 0.6;
 }
+
+a:hover {
+    opacity: 0.6;
+}
+
+a {
+color: #617944;
+}
+
+a:visited {
+color: #8dae4e;
+}
+
+#title {
+    margin: 0;
+    font-size: 3em;
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.4);
+    font-family: 'Poiret One', cursive;
+    margin-bottom: 10;
+}
+
+#subtitle {
+    font-family: "Droid Serif", "DejaVu Serif", "Garamond", serif;
+    font-size: 1.5em;
+    margin-bottom: 30;
+}
+
+#directionbig {
+    font-family: "Droid Sans", "DejaVu Sans", "Arial", sans-serif;
+    font-weight: bold;
+    font-size: 22px;
+}
+
+#grayband {
+    color:#101010;
+}
+
+input[type=text] {
+    width: 600px;
+    background-color: #202020;
+    color: #8dae4e;
+    padding:8;
+}
+
+input[type=submit] {
+    padding:5px 15px;
+    background:#ccc;
+    border:0 none;
+    cursor:pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+}
+
+
+.dropbtn {
+    background-color: #bfbfbf;
+    color: black;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.dropbtn:hover, .dropbtn:focus {
+    opacity: 0.6;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown a:hover {background-color: #f1f1f1}
+
+.show {display:block;}
+
 </style>
+</head>
 
 <body onload="webGLStart();">
 
-<h1>LoopDitty Geometric Music Visualizer</h1>
-
-<b>Paste SoundCloud URL Below</b>
+<div id = "title">Loop Ditty Geometric Music Visualizer</div>
+<div id = "subtitle"> by <a href = "http://www.ctralie.com">Chris Tralie</a></div>
+Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401.
+<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a> and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for inspiration
+<BR><BR><BR>
+<div id = "directionbig">Paste SoundCloud URL Below To Begin</div>
 <table><tr>
-<td><input id = "scurl" type = "text"></td>
+<td><input id = "scurl" type = "text" size = "50"></td>
 <td><button type = "button" onclick = "querySoundCloudURL()">Submit</button></td>
 </tr>
-<tr><td><h3>Audio File</h3></td><td><input type = "file" id = "audioInput"></td></tr>
+
+
+<tr><td colspan = "2">
+    <BR>
+    <h2><b>OR...</b></h2>
+    <BR>
+</td></tr>
+
+<tr><td><div id = "directionbig">Load Your Own Audio File</div></td><td><input type = "file" id = "audioInput"></td></tr>
+
+
+<tr><td colspan = "2">
+    <BR>
+    <h2>OR...</h2>
+    <BR>
+</td></tr>
+
+<tr><td><div id = "directionbig">Try A Precomputed Example</div></td>
+
+    <td>
+        <div class="dropdown">
+        <button onclick="dropdownHandler()" class="dropbtn">Example Songs by Artist</button>
+          <div id="precomputedExamples" class="dropdown-content">
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+          </div>
+        </div>
+
+       </td></tr>
+
 </table>
 
+<BR><BR>
 
 <table>
-
+<tr><td><HR></td><td></td></tr>
 <tr>
-<td width = 800 bgcolor = "black">
+<td width = 800 bgcolor = "#181818">
 <div id = "pagestatus"><h3><font color = "red">Waiting for Input...</font></h3></div>
 </td>
 </tr>
@@ -76,7 +208,7 @@ button:hover {
 <table><tr><td>
 <canvas id="LoopDittyGLCanvas" style="border: none;" width="800" height="600"></canvas>
 </td></tr>
-<tr><td bgcolor = "black" width = 800>
+<tr><td width = 800>
 
 
 <div id = "manualwidget">
@@ -194,6 +326,10 @@ button:hover {
             alert("Error Decoding Audio");
             playAudio();
         }
+    }
+
+    function dropdownHandler() {
+        document.getElementById("precomputedExamples").classList.toggle("show");
     }
 
     //Loading in a custom song

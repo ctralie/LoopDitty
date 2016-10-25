@@ -472,7 +472,7 @@ function webGLStart() {
     dims = [1];
     initGLBuffers(WELCOME_CURVE);
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(0.125, 0.125, 0.125, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     requestAnimFrame(repaint);
