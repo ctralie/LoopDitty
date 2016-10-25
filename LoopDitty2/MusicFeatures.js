@@ -1,7 +1,7 @@
 //Purpose: Code for dealing with SoundCloud and processing features
 
-//SERVER_URL = 'http://loopditty.herokuapp.com/';
-SERVER_URL = 'http://127.0.0.1:5000';
+SERVER_URL = 'http://loopditty.herokuapp.com/';
+//SERVER_URL = 'http://127.0.0.1:5000';
 
 //A function to show a progress bar
 var loading = false;
@@ -55,7 +55,7 @@ function ArrayBufferTobase64(arrayBuff) {
 }
 
 //Parameters for doing PCA on music
-var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false};
+var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:true};
 var musicFeatures = {};
 
 function checkForFeatureFields(res) {
@@ -131,6 +131,7 @@ function processSoundcloudResults(res) {
         return;
     }
     musicFeatures = res;
+    MusicParams.soundcloudSong = true;
     //Update soundcloud widget with this song
     var scurl = document.getElementById("scurl").value;
     //TODO: Finish this
@@ -169,6 +170,7 @@ function processCustomAudio(res) {
         return;
     }
     musicFeatures = res;
+    MusicParams.soundcloudSong = false;
     //Load a web worker in the background that makes the
     //delay series and does PCA
     loadColor = "yellow";
@@ -189,13 +191,46 @@ function processCustomAudio(res) {
     }
 }
 
+function processPrecomputedResults(res) {
+    if (!checkForFeatureFields(res)) {
+        alert("Music features not returned properly from server");
+        setLoadingFailed();
+        return;
+    }
+    musicFeatures = res;
+    MusicParams.soundcloudSong = true;
+    //Update soundcloud widget with this song
+    var scurlfield = document.getElementById("scurl");
+    scurlfield.value = musicFeatures.url;
+
+    //Load a web worker in the background that makes the
+    //delay series and does PCA
+    loadColor = "yellow";
+    var worker = new Worker("DelaySeries.js");
+    worker.postMessage({MusicParams:MusicParams, musicFeatures:musicFeatures});
+
+    worker.onmessage = function(event) {
+        if (event.data.type == "newTask") {
+            loadString = event.data.taskString;
+        }
+        else if (event.data.type == "end") {
+            initGLBuffers(event.data.Y);
+            var arrayBuff = base64ToArrayBuffer(musicFeatures.mp3data);
+            decodeAudio(arrayBuff);
+            timeSlider.value = 0;
+            recomputeButton.style.backgroundColor = "#bfbfbf";
+            MusicParams.needsUpdate = false;
+            changeToReady();
+        }
+    }
+}
+
 function setHeader(xhr) {
     xhr.setRequestHeader('Content-Type', 'text/plain');
 }
 
 function querySoundCloudURL() {
     pauseAudio();
-    var pagestatus = document.getElementById("pagestatus");
     loadString = "Grabbing data from server (this may take a moment)";
     loadColor = "red";
     loading = true;
@@ -220,13 +255,11 @@ function querySoundCloudURL() {
 
 function queryCustomFeatures(file) {
     pauseAudio();
-    var pagestatus = document.getElementById("pagestatus");
     loadString = "Sending data to server for processing (this may take a moment)";
     loadColor = "red";
     loading = true;
     changeLoad();
 
-    //TODO: Add file here
     var formData = new FormData();
     formData.append('file', file, file.name);
     var xhr = new XMLHttpRequest();
@@ -243,4 +276,24 @@ function queryCustomFeatures(file) {
         }
     };
     xhr.send(formData);
+}
+
+
+function loadPrecomputedSong(file) {
+    loadString = "Reading data from server";
+    loadColor = "red";
+    loading = true;
+    changeLoad();
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', file, true);
+    xhr.responseType = 'json';
+    xhr.onload = function(err) {
+        processPrecomputedResults(this.response);
+    };
+    loading = true;
+    ndots = 0;
+    changeLoad();
+    xhr.send();
+
 }
