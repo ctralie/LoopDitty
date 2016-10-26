@@ -82,7 +82,6 @@ function checkForFeatureFields(res) {
 }
 
 function updateParams() {
-    console.log(JSON.stringify(MusicParams));
     if (!MusicParams.needsUpdate) {
         alert('Nothing has changed, so no need to recompute');
         return;
