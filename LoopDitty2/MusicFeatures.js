@@ -115,6 +115,7 @@ function updateParams() {
             timeSlider.value = 0;
             recomputeButton.style.backgroundColor = "#bfbfbf";
             MusicParams.needsUpdate = false;
+            updateTwitterLink();
             changeToReady();
         }
     }
@@ -390,5 +391,4 @@ function makeMusicParamsDirty() {
     MusicParams.needsUpdate = true;
     recomputeButton.style.backgroundColor = "red";
     requestAnimFrame(function(){repaintWithContext(context)});
-    updateTwitterLink();
 }
