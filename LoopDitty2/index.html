@@ -12,12 +12,10 @@
 <script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
 <script type="text/javascript" src="libs/interact.min.js"></script>
 
-<!--D3 stuff!-->
-<script src="libs/d3-collection.v0.1.min.js"></script>
-<script src="libs/d3-dispatch.v0.3.min.js"></script>
-<script src="libs/d3-dsv.v0.2.min.js"></script>
-<script src="libs/d3-request.min.js"></script>
-<script src="libs/d3.min.js"></script>
+<!--Libraries for capturing GIFs!-->
+<script type="text/javascript" src="libs/gif.js"></script>
+<script type="text/javascript" src="libs/gif.worker.js"></script>
+<script type="text/javascript" src="libs/whammy.js"></script>
 
 <!--My Scripts!-->
 <script src="Cameras3D.js"></script>
@@ -201,7 +199,7 @@ input[type=range]:focus::-ms-fill-upper {
     display: none;
     position: absolute;
     background-color: #000000;
-    min-width: 160px;
+    min-width: 400px;
     overflow: auto;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
@@ -355,6 +353,8 @@ input[type=range]:focus::-ms-fill-upper {
             <button type = "button" onclick = "loadDrake()">Drake</button>
             <button type = "button" onclick = "loadDuranDuran()">Duran Duran</button>
             <button type = "button" onclick = "loadEarthWindAndFire()">Earth Wind And Fire</button>
+            <button type = "button" onclick = "loadFuture()">Future</button>
+            <button type = "button" onclick = "loadHeems()">Heems</button>
             <button type = "button" onclick = "loadHudsonMohawke()">Hudson Mohawke</button>
             <button type = "button" onclick = "loadJanetJackson()">Janet Jackson</button>
             <button type = "button" onclick = "loadJenniferLopez()">Jennifer Lopez</button>
@@ -365,6 +365,7 @@ input[type=range]:focus::-ms-fill-upper {
             <button type = "button" onclick = "loadMikeJones()">Mike Jones</button>
             <button type = "button" onclick = "loadMissyElliot()">Missy Elliot</button>
             <button type = "button" onclick = "loadMotorhead()">Motorhead</button>
+            <button type = "button" onclick = "loadMussorgsky()">Mussorgsky</button>
             <button type = "button" onclick = "loadPeterGabriel()">Peter Gabriel</button>
             <button type = "button" onclick = "loadRickJames()">Rick James</button>
             <button type = "button" onclick = "loadRollingStones()">Rolling Stones</button>
@@ -388,7 +389,7 @@ input[type=range]:focus::-ms-fill-upper {
 
 <BR><BR>
 
-<table>
+<table width = 1200>
 <tr><td><HR></td><td></td></tr>
 <tr>
 <td width = 800>
@@ -409,6 +410,7 @@ input[type=range]:focus::-ms-fill-upper {
 <tr>
 <td><button type = "button" onclick = "playAudioButton()">&#9654;</button></td>
 <td><button type = "button" onclick = "pauseAudio()">&#10073;&#10073;</button></td>
+<td><button type = "button" onclick = "startAnimation()">Make GIF</button></td>
 </tr>
 </table>
 </div>
@@ -509,7 +511,7 @@ input[type=range]:focus::-ms-fill-upper {
 <tr>
     <td><div id = "paramchoice">
         <div class="tooltip">Window Length
-            <span class="tooltiptext">This is the length in seconds of the window that is used to summarize the features taken in chunks of audio.  Features are computed in 23 millisecond chunks, so the default value of 3.5 seconds corresponds to averaging roughly 150 windows.  The longer the window is, the more sound is summarized by the window, which means the points in the animation are likely to be more distinct.</span>
+            <span class="tooltiptext">This is the length in seconds of the window that is used to summarize the features taken in chunks of audio.  Features are computed in 23 millisecond chunks, so the default value of 3.5 seconds corresponds to averaging roughly 150 windows.  The longer the window is, the more sound is summarized by the window, which means the points in the animation are likely to be more distinct.  Longer windows also tend to produce smoother animations, while smaller windows pick up on faster variations</span>
         </div>
     </div></td>
     <td><input id = "windowLength" type = "text" value = "3.5" size = "1"></td>
@@ -550,7 +552,7 @@ input[type=range]:focus::-ms-fill-upper {
 
     <h1>About</h1>
     <p>
-    This app is a combination of audio and 3D geometry that is used to visually inspect statistics of music synchronized with the music they represent.  In plain English, <i>it's a music visualizer with a curve waving to the music</i>.  Depending on the statistics you choose, the curve will respond to different aspects of the music (mouse over "Feature Choices" for more information).  For instance, if you use the default parameters, you should see a curve which moves to distinct parts of space for different musical sections, such as verse, chorus, and bridge.  If, on the other hand, you choose only spectral flux, with a window length of 1 second, using sphere normalization and variation, you will see a curve which moves around a circle to the beat.  Play around with different combinations of feature parameters and see what you get for different types of music!
+    This app is a combination of audio and 3D geometry that is used to visually inspect statistics of music synchronized with the music they represent.  In plain English, <i>it's a music visualizer with a curve waving to the music</i>.  Depending on the statistics you choose, the curve will respond to different aspects of the music (mouse over "Feature Choices" for more information).  For instance, if you use the default parameters, you should see a curve which moves to distinct parts of space for different musical sections, such as verse, chorus, and bridge.  If, on the other hand, you choose only spectral flux, with a window length of 0.2 seconds, using sphere normalization and variation, you will see a curve which moves around a circle to the beat.  Play around with different combinations of feature parameters and see what you get for different types of music!
     </p>
 
 

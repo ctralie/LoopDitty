@@ -37,6 +37,12 @@ function loadDuranDuran() {
 function loadEarthWindAndFire() {
     loadPrecomputedSong("Examples/EarthWindAndFire.json");
 }
+function loadFuture() {
+    loadPrecomputedSong("Examples/Future.json");
+}
+function loadHeems() {
+    loadPrecomputedSong("Examples/Heems.json");
+}
 function loadHudsonMohawke() {
     loadPrecomputedSong("Examples/HudsonMohawke.json");
 }
@@ -66,6 +72,9 @@ function loadMissyElliot(){
 }
 function loadMotorhead() {
     loadPrecomputedSong("Examples/Motorhead.json");
+}
+function loadMussorgsky() {
+    loadPrecomputedSong("Examples/Mussorgsky.json");
 }
 function loadPeterGabriel() {
     loadPrecomputedSong("Examples/PeterGabriel.json");

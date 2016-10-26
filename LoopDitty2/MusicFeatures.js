@@ -55,7 +55,7 @@ function ArrayBufferTobase64(arrayBuff) {
 }
 
 //Parameters for doing PCA on music
-var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:true};
+var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:false};
 var musicFeatures = {};
 
 function checkForFeatureFields(res) {

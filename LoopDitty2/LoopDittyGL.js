@@ -273,6 +273,25 @@ var times = [];
 //Camera stuff
 var camera = new MousePolarCamera(800, 600, 0.75);
 var farR = 1.0;
+var bbox = [0, 1, 0, 1, 0, 1];
+
+//Animation stuff
+var capturer = null;
+var animFrameNum = 0;
+var NAnimFrames = 30;
+var origCamera = {};
+
+function centerOnBBox() {
+    var dX = bbox[1] - bbox[0];
+    var dY = bbox[3] - bbox[2];
+    var dZ = bbox[5] - bbox[4];
+    farR = Math.sqrt(dX*dX + dY*dY + dZ*dZ);
+    camera.R = farR;
+    camera.center = vec3.fromValues(bbox[0] + 0.5*dX, bbox[2] + 0.5*dY, bbox[4] + 0.5*dZ);
+    camera.phi = Math.PI/2;
+    camera.theta = -Math.PI/2;
+    camera.updateVecsFromPolar();
+}
 
 function initGLBuffers(X) {
     var N = X.length;
@@ -357,7 +376,7 @@ function initGLBuffers(X) {
 
     //Now determine the bounding box of the curve and use
     //that to update the camera info
-    var bbox = [vertices[0], vertices[0], vertices[1], vertices[1], vertices[2], vertices[2]];
+    bbox = [vertices[0], vertices[0], vertices[1], vertices[1], vertices[2], vertices[2]];
     for (i = 0; i < N; i++) {
         if (vertices[i*3] < bbox[0]) {
             bbox[0] = vertices[i*3];
@@ -378,16 +397,7 @@ function initGLBuffers(X) {
             bbox[5] = vertices[i*3+2];
         }
     }
-    var dX = bbox[1] - bbox[0];
-    var dY = bbox[3] - bbox[2];
-    var dZ = bbox[5] - bbox[4];
-    farR = Math.sqrt(dX*dX + dY*dY + dZ*dZ);
-    camera.R = farR;
-    camera.center = vec3.fromValues(bbox[0] + 0.5*dX, bbox[2] + 0.5*dY, bbox[4] + 0.5*dZ);
-    camera.phi = Math.PI/2;
-    camera.theta = -Math.PI/2;
-    camera.updateVecsFromPolar();
-
+    centerOnBBox();
     requestAnimFrame(repaint);
 }
 
@@ -430,6 +440,31 @@ function drawScene() {
     }
 }
 
+function drawSceneAnim() {
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, camera.R/100.0, Math.max(farR*2, camera.R*2));
+    mvMatrix = camera.getMVMatrix();
+
+    if (allVertexVBO != -1 && allColorVBO != -1) {
+        gl.useProgram(shaderProgram);
+        setUniforms(shaderProgram);
+        //Step 1: Draw all points unsaturated
+        gl.bindBuffer(gl.ARRAY_BUFFER, allVertexVBO);
+        gl.vertexAttribPointer(shaderProgram.vPosAttrib, allVertexVBO.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, allColorVBO);
+        gl.vertexAttribPointer(shaderProgram.vColorAttrib, allColorVBO.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.POINTS, 0, DelaySeries.length);
+        //Draw Lines between points if the user so chooses
+        if (MusicParams.displayTimeEdges) {
+            gl.drawArrays(gl.LINES, 0, DelaySeries.length-2);
+            gl.drawArrays(gl.LINES, 1, DelaySeries.length-1);
+        }
+    }
+}
+
 
 function repaint() {
     drawScene();
@@ -448,6 +483,41 @@ function repaintWithContext(context) {
         playTime = offsetTime;
         drawScene();
     }
+}
+
+function repaintAnimation() {
+    if (animFrameNum < NAnimFrames) {
+        camera.theta = 2*Math.PI*animFrameNum/NAnimFrames;
+        camera.updateVecsFromPolar();
+        drawSceneAnim();
+        capturer.addFrame(glcanvas, {copy:true, delay:100});
+        animFrameNum++;
+        requestAnimFrame(repaintAnimation);
+    }
+    else {
+        capturer.render();
+
+        //Restore original camera parameters and repaint
+        camera.theta = origCamera.theta;
+        camera.phi = origCamera.phi;
+        camera.R = origCamera.R;
+        camera.center = origCamera.center;
+        camera.updateVecsFromPolar();
+        requestAnimFrame(drawScene);
+    }
+}
+
+function startAnimation() {
+    capturer = new GIF({workers:2, quality:10, workerScript:"libs/gif.worker.js"});
+    capturer.on('finished', function(blob) {
+      window.open(URL.createObjectURL(blob));
+    });
+    animFrameNum = 0;
+    var C = vec3.create();
+    vec3.copy(C, camera.center);
+    origCamera = {theta:camera.theta, phi:camera.phi, R:camera.R, center:C};
+    centerOnBBox();
+    requestAnimFrame(repaintAnimation);
 }
 
 
