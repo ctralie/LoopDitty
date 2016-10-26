@@ -495,6 +495,7 @@ function repaintAnimation() {
         requestAnimFrame(repaintAnimation);
     }
     else {
+        loadString = "Making GIF";
         capturer.render();
 
         //Restore original camera parameters and repaint
@@ -508,9 +509,15 @@ function repaintAnimation() {
 }
 
 function startAnimation() {
+    loading = true;
+    loadString = "Rendering frames";
+    loadColor = "yellow";
+    changeLoad();
     capturer = new GIF({workers:2, quality:10, workerScript:"libs/gif.worker.js"});
     capturer.on('finished', function(blob) {
       window.open(URL.createObjectURL(blob));
+      loading = false;
+      waitingDisp.innerHTML = "<h3><font color = \"#00FF00\">Finished</font></h3>";
     });
     animFrameNum = 0;
     var C = vec3.create();

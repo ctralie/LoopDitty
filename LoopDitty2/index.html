@@ -11,11 +11,9 @@
 <script type="text/javascript" src="libs/webgl-utils.js"></script>
 <script type="text/javascript" src="libs/numeric-1.2.6.min.js"></script>
 <script type="text/javascript" src="libs/interact.min.js"></script>
-
 <!--Libraries for capturing GIFs!-->
 <script type="text/javascript" src="libs/gif.js"></script>
 <script type="text/javascript" src="libs/gif.worker.js"></script>
-<script type="text/javascript" src="libs/whammy.js"></script>
 
 <!--My Scripts!-->
 <script src="Cameras3D.js"></script>
@@ -306,10 +304,9 @@ input[type=range]:focus::-ms-fill-upper {
 
 
 <table>
-<tr><td colspan = "2"><div id = "acknowledgements">Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401
-<BR>and an NSF Research Training Grant NSF-DMS 1045133.
-<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a> for inspiration<BR>
-    and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for motivation
+<tr><td colspan = "2"><div id = "acknowledgements">Supported by an <a href = "https://www.nsfgrfp.org/">NSF Graduate Fellowship</a> NSF DGF 1106401 and an NSF Research Training Grant NSF-DMS 1045133.
+<BR>Special thanks to <a href = "http://geomdata.com/">Geometric Data Analytics, Inc.</a> for inspiration
+    and the <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions Program</a> for motivation.
 </div>
 </td></tr>
 <tr><td colspan = "2"><div id = "directionbig">Paste SoundCloud URL Below To Begin</div></td></tr>
@@ -393,6 +390,7 @@ input[type=range]:focus::-ms-fill-upper {
 <tr><td><HR></td><td></td></tr>
 <tr>
 <td width = 800>
+<a name = "loading"></a>
 <div id = "pagestatus"><h3><font color = "red">Waiting for Input...</font></h3></div>
 </td>
 </tr>
@@ -411,6 +409,7 @@ input[type=range]:focus::-ms-fill-upper {
 <td><button type = "button" onclick = "playAudioButton()">&#9654;</button></td>
 <td><button type = "button" onclick = "pauseAudio()">&#10073;&#10073;</button></td>
 <td><button type = "button" onclick = "startAnimation()">Make GIF</button></td>
+<td><a id="twitterButton" href = ""><img src = "Twitter.png" id = "twitterImage"></a>
 </tr>
 </table>
 </div>
@@ -548,6 +547,16 @@ input[type=range]:focus::-ms-fill-upper {
     With a mobile device or a touch screen, <font color = "#8dae4e;">drag</font> to translate/rotate the curve and <font color = "#8dae4e;">pinch</font> to zoom.  <font color = "#8dae4e;">Double tap</font> to toggle between translating and rotating.
     </p>
     </li>
+    <li>
+        <p>
+            If you click the <font color = "#8dae4e;">"Make GIF"</font> button, the program will automatically generate an animated GIF looping 360 degrees around the current song you've loaded.
+        </p>
+    </li>
+    <li>
+    <p>
+        If you load a sound from Soundcloud (including the precomputed sounds), a <font color = "#8dae4e;">twitter button</font> will pop up below the time slider.  This will allow you to share a link which stores the song link and parameter choices you found under the hashtag <font color = "#8dae4e;">#loopditty</font> with a clickable link that others can use to view what you found.  So if you find interesting songs and parameter combinations, please share them!
+    </p>
+    </li>
     </ul>
 
     <h1>About</h1>
@@ -560,7 +569,13 @@ input[type=range]:focus::-ms-fill-upper {
     This app started off as an <a href = "http://www.ctralie.com/Teaching/Math412_F2014_MusicAssignment/">assignment</a> that <a href = "http://www.ctralie.com">Chris Tralie</a> created for an undergraduate class in <a href = "http://paulbendich.com/Spring2016TDA.pdf">applied topology</a> as part of <a href = "http://bigdata.duke.edu/data-expeditions">Duke Data Expeditions</a> during the fall of 2014.  It served as the motivation for research on <a href = "http://www.ctralie.com/Research/index.html#CoverSongsShape">cover song identification with timbral shape features</a> and <a href = "http://www.ctralie.com/Research/index.html#GeomModelsAudio">geometric models for musical audio</a>, which represent a portion of the applications in Chris's Ph.D. research.  This work was also highlighted in a <a href = "http://www.forbes.com/sites/kevinknudson/2016/07/29/visualizing-music-mathematically">Forbes blog article</a>.
     </p>
 
+</td>
+
+<td>
+    <a class="twitter-timeline"  href="https://twitter.com/hashtag/loopditty" data-widget-id="791408444725157896">#loopditty Tweets</a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 </td></tr>
+
 </table>
 
 
@@ -661,7 +676,7 @@ input[type=range]:focus::-ms-fill-upper {
     var timeEdgesCheckbox = document.getElementById('timeEdgesCheckbox');
     timeEdgesCheckbox.addEventListener('change', function(e) {
         MusicParams.displayTimeEdges = timeEdgesCheckbox.checked;
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     timeEdgesCheckbox.checked = true;
 
@@ -669,86 +684,71 @@ input[type=range]:focus::-ms-fill-upper {
     var MFCCCheckbox = document.getElementById('MFCCCheckbox');
     MFCCCheckbox.addEventListener('change', function(e) {
         MusicParams.usingMFCC = MFCCCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     MFCCCheckbox.checked = true;
 
     var ChromaCheckbox = document.getElementById('ChromaCheckbox');
     ChromaCheckbox.addEventListener('change', function(e) {
         MusicParams.usingChroma = ChromaCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     ChromaCheckbox.checked = true;
 
     var CentroidCheckbox = document.getElementById('CentroidCheckbox');
     CentroidCheckbox.addEventListener('change', function(e) {
         MusicParams.usingCentroid = CentroidCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     CentroidCheckbox.checked = true;
 
     var RoloffCheckbox = document.getElementById('RoloffCheckbox');
     RoloffCheckbox.addEventListener('change', function(e) {
         MusicParams.usingRoloff = RoloffCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     RoloffCheckbox.checked = true;
 
     var FluxCheckbox = document.getElementById('FluxCheckbox');
     FluxCheckbox.addEventListener('change', function(e) {
         MusicParams.usingFlux = FluxCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     FluxCheckbox.checked = true;
 
     var ZeroCrossingsCheckbox = document.getElementById('ZeroCrossingsCheckbox');
     ZeroCrossingsCheckbox.addEventListener('change', function(e) {
         MusicParams.usingZeroCrossings = ZeroCrossingsCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     ZeroCrossingsCheckbox.checked = true;
 
     var SphereNormalizeCheckbox = document.getElementById('SphereNormalizeCheckbox');
     SphereNormalizeCheckbox.addEventListener('change', function(e) {
         MusicParams.sphereNormalize = SphereNormalizeCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     SphereNormalizeCheckbox.checked = false;
 
     var UseVariationCheckbox = document.getElementById('UseVariationCheckbox');
     UseVariationCheckbox.addEventListener('change', function(e) {
         MusicParams.usingDerivatives = UseVariationCheckbox.checked;
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
-        requestAnimFrame(function(){repaintWithContext(context)});
+        makeMusicParamsDirty();
     });
     UseVariationCheckbox.checked = false;
 
     var windowLengthText = document.getElementById('windowLength');
     windowLengthText.value = "" + MusicParams.TimeWin;
     windowLengthText.addEventListener('input', function() {
-        MusicParams.needsUpdate = true;
-        recomputeButton.style.backgroundColor = "red";
+        makeMusicParamsDirty();
     })
 
     function dropdownHandler() {
         document.getElementById("precomputedExamples").classList.toggle("show");
     }
 
+    checkURLParameters();
+    updateTwitterLink();
 </script>
 
 <!-- Start of StatCounter Code  -->

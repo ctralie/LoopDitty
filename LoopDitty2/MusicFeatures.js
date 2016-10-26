@@ -55,7 +55,7 @@ function ArrayBufferTobase64(arrayBuff) {
 }
 
 //Parameters for doing PCA on music
-var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:false};
+var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:false, scurl:""};
 var musicFeatures = {};
 
 function checkForFeatureFields(res) {
@@ -82,6 +82,7 @@ function checkForFeatureFields(res) {
 }
 
 function updateParams() {
+    console.log(JSON.stringify(MusicParams));
     if (!MusicParams.needsUpdate) {
         alert('Nothing has changed, so no need to recompute');
         return;
@@ -134,7 +135,8 @@ function processSoundcloudResults(res) {
     MusicParams.soundcloudSong = true;
     //Update soundcloud widget with this song
     var scurl = document.getElementById("scurl").value;
-    //TODO: Finish this
+    MusicParams.scurl = scurl;
+    //TODO: Finish this and display data from soundcloud
 
     //Load a web worker in the background that makes the
     //delay series and does PCA
@@ -153,6 +155,7 @@ function processSoundcloudResults(res) {
             timeSlider.value = 0;
             recomputeButton.style.backgroundColor = "#bfbfbf";
             MusicParams.needsUpdate = false;
+            updateTwitterLink();
             changeToReady();
         }
     }
@@ -171,6 +174,8 @@ function processCustomAudio(res) {
     }
     musicFeatures = res;
     MusicParams.soundcloudSong = false;
+    MusicParams.scurl = "";
+    updateTwitterLink();
     //Load a web worker in the background that makes the
     //delay series and does PCA
     loadColor = "yellow";
@@ -199,6 +204,8 @@ function processPrecomputedResults(res) {
     }
     musicFeatures = res;
     MusicParams.soundcloudSong = true;
+    MusicParams.scurl = musicFeatures.url;
+    updateTwitterLink();
     //Update soundcloud widget with this song
     var scurlfield = document.getElementById("scurl");
     scurlfield.value = musicFeatures.url;
@@ -219,6 +226,7 @@ function processPrecomputedResults(res) {
             decodeAudio(arrayBuff);
             timeSlider.value = 0;
             recomputeButton.style.backgroundColor = "#bfbfbf";
+
             MusicParams.needsUpdate = false;
             changeToReady();
         }
@@ -296,4 +304,91 @@ function loadPrecomputedSong(file) {
     changeLoad();
     xhr.send();
 
+}
+
+//Functions to deal with twitter or precomputed choices
+function musicParamsToString() {
+    var idx = MusicParams.scurl.indexOf("soundcloud.com/");
+    if (idx == -1) {
+        return "";
+    }
+    var sep = "?"
+    var scstr = MusicParams.scurl.substring(idx+"soundcloud.com/".length);
+    var s = MusicParams.TimeWin + sep + MusicParams.usingMFCC + sep + MusicParams.usingChroma + sep + MusicParams.usingCentroid + sep + MusicParams.usingRoloff + sep + MusicParams.usingFlux + sep + MusicParams.usingZeroCrossings + sep + MusicParams.sphereNormalize + sep + MusicParams.usingDerivatives + sep + MusicParams.displayTimeEdges + sep + scstr;
+    return s;
+}
+
+//var MusicParams = {TimeWin:3.5, usingMFCC:true, usingChroma:true, usingCentroid:true, usingRoloff:true, usingFlux:true, usingZeroCrossings:true, sphereNormalize:false, usingDerivatives:false, displayTimeEdges:true, needsUpdate:false, soundcloudSong:false, scurl:""};
+function checkURLParameters() {
+    //Now check to see if the user is loading in any predefined songs or parameters
+    var sep = "?";
+    var s = location.href;
+    var idx = s.indexOf("MusicParams");
+    if (idx > -1) {
+        s = s.substring(idx+"MusicParams".length+1);
+        fields = s.split(sep);
+        if (fields.length < 11) {
+            alert("Not enough parameters specified in the URL");
+            return;
+        }
+        var i = 0;
+        MusicParams.TimeWin = parseFloat(s[i]);
+        windowLengthText.value = fields[i];
+        i++;
+        MusicParams.usingMFCC = (fields[i] == "true");
+        MFCCCheckbox.checked = MusicParams.usingMFCC;
+        i++;
+        MusicParams.usingChroma = (fields[i] == "true");
+        ChromaCheckbox.checked = MusicParams.usingChroma;
+        i++;
+        MusicParams.usingCentroid = (fields[i] == "true");
+        CentroidCheckbox.checked = MusicParams.usingCentroid;
+        i++;
+        MusicParams.usingRoloff = (fields[i] == "true");
+        RoloffCheckbox.checked = MusicParams.usingRoloff;
+        i++;
+        MusicParams.usingFlux = (fields[i] == "true");
+        FluxCheckbox.checked = MusicParams.usingFlux;
+        i++;
+        MusicParams.usingZeroCrossings = (fields[i] == "true");
+        ZeroCrossingsCheckbox.checked = MusicParams.usingZeroCrossings;
+        i++;
+        MusicParams.sphereNormalize = (fields[i] == "true");
+        SphereNormalizeCheckbox.checked = MusicParams.sphereNormalize;
+        i++;
+        MusicParams.usingDerivatives = (fields[i] == "true");
+        UseVariationCheckbox.checked = MusicParams.usingDerivatives;
+        i++;
+        MusicParams.displayTimeEdges = (fields[i] == "true");
+        timeEdgesCheckbox.checked = MusicParams.displayTimeEdges;
+        i++;
+        MusicParams.soundcloudSong = true;
+        MusicParams.scurl = "https://www.soundcloud.com/" + fields[i];
+        document.getElementById("scurl").value = MusicParams.scurl;
+        querySoundCloudURL();
+    }
+}
+
+function updateTwitterLink() {
+    var twitterButton = document.getElementById("twitterButton");
+    var twitterImage = document.getElementById("twitterImage");
+    if (!MusicParams.soundcloudSong) {
+        twitterButton.style.visibility = "hidden";
+        twitterImage.style.visibility = "hidden";
+        twitterButton.href = "#loading";
+        return;
+    }
+    twitterButton.style.visibility = "visible";
+    twitterImage.style.visibility = "visible";
+    baseurl = "https://twitter.com/intent/tweet?text=Checkout+this+song+I+found+on+LoopDitty&hashtags=loopditty&url=";
+    url = "http://www.loopditty.net/index.html#loading?MusicParams=" + musicParamsToString();
+    url = encodeURIComponent(url);
+    twitterButton.href = baseurl + url;
+}
+
+function makeMusicParamsDirty() {
+    MusicParams.needsUpdate = true;
+    recomputeButton.style.backgroundColor = "red";
+    requestAnimFrame(function(){repaintWithContext(context)});
+    updateTwitterLink();
 }
