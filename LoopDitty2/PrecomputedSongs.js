@@ -106,6 +106,9 @@ function loadThePixies() {
 function loadTI() {
     loadPrecomputedSong("Examples/TI.json");
 }
+function loadUffie() {
+    loadPrecomputedSong("Examples/Uffie.json");
+}
 function loadVanHalen() {
     loadPrecomputedSong("Examples/VanHalen.json");
 }
