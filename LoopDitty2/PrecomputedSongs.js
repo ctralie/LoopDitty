@@ -58,6 +58,9 @@ function loadKC() {
 function loadKevinLyttle() {
     loadPrecomputedSong("Examples/KevinLyttle.json");
 }
+function loadLilB() {
+    loadPrecomputedSong("Examples/LilB.json")
+}
 function loadMase() {
     loadPrecomputedSong("Examples/Mase.json");
 }
