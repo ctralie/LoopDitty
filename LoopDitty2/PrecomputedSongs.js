@@ -124,3 +124,6 @@ function loadWillSmith() {
 function loadWizKhalifa() {
     loadPrecomputedSong("Examples/WizKhalifa.json");
 }
+function loadZombieNation() {
+    loadPrecomputedSong("Examples/ZombieNation.json");
+}
