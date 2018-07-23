@@ -537,11 +537,16 @@ function webGLStart() {
     glcanvas.addEventListener('mousemove', clickerDragged);
     glcanvas.addEventListener('mouseout', mouseOut);
 
-    interact(glcanvas)
+    glcanvas.addEventListener('pointerdown', makeClick);
+    glcanvas.addEventListener('pointerup', releaseClick);
+    glcanvas.addEventListener('pointermove', clickerDragged);
+    glcanvas.addEventListener('pointerout', mouseOut);
+
+    /*interact(glcanvas)
         .draggable({onstart:touchDragStart, onmove:touchDragged})
         .gesturable({onmove:touchGesture})
         .on('doubletap', touchToggleTap)
-        .preventDefault('always');
+        .preventDefault('always');*/
 
     initGL(glcanvas);
     initShaders();
